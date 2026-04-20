@@ -1,6 +1,6 @@
 // Simple service worker — caches the app so it works offline
-const CACHE_NAME = 'habits-v3';
-const ASSETS = ['./', './index.html'];
+const CACHE_NAME = 'habits-v5';
+const ASSETS = ['./', './index.html', './icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
