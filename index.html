@@ -3,85 +3,152 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Habits</title>
+<title>Tracker</title>
 
-<!-- iOS home-screen app setup -->
+<!-- iOS PWA -->
+<meta name="color-scheme" content="light only">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Habits">
-<meta name="theme-color" content="#F5F1E8">
+<meta name="theme-color" content="#FDF9F0">
 
-<!-- App icon (inline SVG — no extra files needed) -->
 <link rel="apple-touch-icon" href="./icon.png">
 <link rel="icon" type="image/png" href="./icon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+  /* ==========================================================
+     SHARED VARIABLES (palette switches via body.mode-* class)
+     ========================================================== */
   :root {
-    --cream: #F5F1E8;
-    --cream-dark: #EAE3D2;
-    --sage: #7A9278;
-    --sage-dark: #5C7A5C;
-    --sage-light: #B8CDB5;
-    --sage-pale: #DCE6D8;
+    color-scheme: light only;
     --ink: #2C3A2E;
     --ink-soft: #4A5B4C;
     --muted: #8A9589;
-    --border: #D8D2C2;
-    --warn: #C77D54;
     --shadow: 0 1px 2px rgba(44, 58, 46, 0.04), 0 4px 12px rgba(44, 58, 46, 0.06);
     --shadow-lift: 0 4px 8px rgba(44, 58, 46, 0.08), 0 12px 24px rgba(44, 58, 46, 0.1);
   }
 
+  /* PERSONAL — sage palette */
+  body.mode-habits {
+    --cream: #FBFAF6;
+    --cream-dark: #F1EFE6;
+    --accent: #8AA588;
+    --accent-dark: #5C7A5C;
+    --accent-light: #C6D8C3;
+    --accent-pale: #E9F0E6;
+    --ink: #2C3A2E;
+    --ink-soft: #4A5B4C;
+    --muted: #97A096;
+    --border: #E7E3D6;
+    --warn: #C77D54;
+  }
+
+  /* HOUSEHOLD — babouche/saffron palette */
+  body.mode-chores {
+    --cream: #FFFDF8;
+    --cream-dark: #F8F1DE;
+    --accent: #DDA04E;
+    --accent-dark: #A66616;
+    --accent-light: #F0D5A4;
+    --accent-pale: #FBF0D8;
+    --ink: #3A2E1F;
+    --ink-soft: #5B4A36;
+    --muted: #A7987F;
+    --border: #F1E8D2;
+    --warn: #B8721C;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: #FBFAF6; }
+  html:has(body.mode-chores) { background: #FFFDF8; }
 
   body {
     font-family: 'Manrope', -apple-system, sans-serif;
     background: var(--cream);
     color: var(--ink);
     min-height: 100vh;
-    padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
-    background-image:
-      radial-gradient(circle at 15% 20%, rgba(184, 205, 181, 0.18) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(199, 125, 84, 0.08) 0%, transparent 40%);
+    padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    transition: background 0.4s ease, color 0.4s ease;
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
   }
+  /* v2.1: flat light backgrounds — no gradients, calmer and cleaner */
 
-  .container {
-    max-width: 720px;
-    margin: 0 auto;
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* ==========================================================
+     MODE SWITCHER
+     ========================================================== */
+  .mode-switcher {
+    display: flex;
+    background: var(--cream-dark);
+    padding: 4px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: var(--shadow);
+    transition: background 0.4s ease;
+  }
+  .mode-btn {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 9px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.04em;
+  }
+  .mode-btn.active {
+    background: white;
+    color: var(--accent-dark);
+    box-shadow: var(--shadow);
+  }
+  .mode-btn .mode-icon {
+    margin-right: 6px;
+    font-size: 14px;
   }
 
-  /* Header */
+  /* ==========================================================
+     HEADER (brand + date)
+     ========================================================== */
   header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 32px;
-    padding-bottom: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
   }
   .brand {
     font-family: 'Fraunces', serif;
     font-weight: 600;
-    font-size: 32px;
+    font-size: 30px;
     letter-spacing: -0.02em;
     color: var(--ink);
     line-height: 1;
+    transition: color 0.4s ease;
   }
   .brand em {
     font-style: italic;
     font-weight: 500;
-    color: var(--sage-dark);
+    color: var(--accent-dark);
+    transition: color 0.4s ease;
   }
   .date-stamp {
     text-align: right;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--muted);
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -89,7 +156,7 @@
   .date-stamp .day {
     font-family: 'Fraunces', serif;
     font-style: italic;
-    font-size: 18px;
+    font-size: 17px;
     color: var(--ink-soft);
     text-transform: none;
     letter-spacing: 0;
@@ -97,37 +164,46 @@
     margin-top: 2px;
   }
 
-  /* Tabs */
+  /* ==========================================================
+     TAB BAR
+     ========================================================== */
   .tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
     display: flex;
     gap: 4px;
-    background: var(--cream-dark);
-    padding: 4px;
-    border-radius: 12px;
-    margin-bottom: 28px;
-    width: fit-content;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    z-index: 50;
   }
   .tab {
-    padding: 10px 20px;
+    flex: 1;
+    padding: 7px 4px;
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 12px;
     transition: all 0.2s ease;
     letter-spacing: 0.02em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
   }
+  .tab .tab-icon { font-size: 19px; line-height: 1; }
   .tab.active {
-    background: var(--cream);
-    color: var(--sage-dark);
-    box-shadow: var(--shadow);
+    background: var(--accent-pale);
+    color: var(--accent-dark);
   }
   .tab:hover:not(.active) { color: var(--ink-soft); }
 
-  /* View panels */
   .view { display: none; }
   .view.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn {
@@ -135,13 +211,22 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Progress summary */
+  /* Mode-specific app sections (only one visible at a time) */
+  .mode-app { display: none; }
+  body.mode-habits .mode-app[data-mode="habits"] { display: block; }
+  body.mode-chores .mode-app[data-mode="chores"] { display: block; }
+  /* When the Plan tab is open, hide both mode sections entirely */
+  body.plan-open .mode-app { display: none !important; }
+
+  /* ==========================================================
+     SHARED CARDS, BUTTONS, MISC
+     ========================================================== */
   .summary {
     background: white;
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px 24px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -156,42 +241,89 @@
   }
   .summary-text .value {
     font-family: 'Fraunces', serif;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
     color: var(--ink);
     letter-spacing: -0.01em;
   }
   .summary-text .value em {
     font-style: italic;
-    color: var(--sage);
+    color: var(--accent);
     font-weight: 500;
   }
-  .ring {
-    width: 64px;
-    height: 64px;
-    position: relative;
-  }
+  .ring { width: 60px; height: 60px; position: relative; }
   .ring svg { transform: rotate(-90deg); }
   .ring circle { fill: none; stroke-width: 6; }
-  .ring .bg { stroke: var(--sage-pale); }
-  .ring .fg { stroke: var(--sage); stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+  .ring .bg { stroke: var(--accent-pale); }
+  .ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
   .ring-text {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Fraunces', serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--sage-dark);
+    color: var(--accent-dark);
   }
 
-  /* Habits list */
+  .primary-btn {
+    padding: 11px 18px;
+    background: var(--accent-dark);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .primary-btn:hover { background: var(--accent); transform: translateY(-1px); }
+  .secondary-btn {
+    padding: 11px 18px;
+    background: white;
+    color: var(--accent-dark);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .secondary-btn:hover { background: var(--accent-pale); }
+  .danger-btn {
+    padding: 11px 18px;
+    background: white;
+    color: var(--warn);
+    border: 1px solid var(--warn);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .danger-btn:hover { background: var(--warn); color: white; }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--accent-dark);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+  .link-btn:hover { background: var(--accent-pale); }
+
+  /* ==========================================================
+     HABIT CARDS
+     ========================================================== */
   .habits {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: flex; flex-direction: column; gap: 10px;
   }
   .habit {
     background: white;
@@ -205,66 +337,84 @@
     box-shadow: var(--shadow);
   }
   .habit.done {
-    background: var(--sage-pale);
-    border-color: var(--sage-light);
+    background: var(--accent-pale);
+    border-color: var(--accent-light);
   }
   .habit:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); }
-
   .check {
-    width: 28px;
-    height: 28px;
+    width: 28px; height: 28px;
     border-radius: 50%;
     border: 2px solid var(--border);
     background: var(--cream);
     cursor: pointer;
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.2s ease;
     padding: 0;
   }
-  .check:hover { border-color: var(--sage); }
-  .habit.done .check {
-    background: var(--sage);
-    border-color: var(--sage);
-  }
+  .check:hover { border-color: var(--accent); }
+  .habit.done .check { background: var(--accent); border-color: var(--accent); }
   .check svg {
     width: 14px; height: 14px;
     stroke: white; stroke-width: 3;
     fill: none; stroke-linecap: round; stroke-linejoin: round;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    opacity: 0; transition: opacity 0.2s ease;
   }
   .habit.done .check svg { opacity: 1; }
-
-  .habit-body {
-    flex: 1;
-    min-width: 0;
-  }
+  .habit-body { flex: 1; min-width: 0; }
   .habit-name {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 15px; font-weight: 600;
     color: var(--ink);
     margin-bottom: 2px;
   }
-  .habit.done .habit-name { color: var(--sage-dark); }
+  .habit.done .habit-name { color: var(--accent-dark); }
   .habit-meta {
-    font-size: 12px;
-    color: var(--muted);
-    display: flex;
-    gap: 10px;
-    align-items: center;
+    font-size: 12px; color: var(--muted);
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap;
   }
   .flame {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    color: var(--warn);
+    display: inline-flex; align-items: center; gap: 3px;
+    color: var(--warn); font-weight: 600;
+  }
+  .habit-meta .streak-label { color: var(--muted); font-weight: 500; }
+  .habit-meta .time-today { color: var(--accent-dark); font-weight: 600; }
+
+  /* Timer button */
+  .timer-btn {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: white;
+    color: var(--accent-dark);
+    font-family: inherit;
+    font-size: 13px;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 6px;
+    min-width: 78px; justify-content: center;
+  }
+  .timer-btn:hover { background: var(--accent-pale); }
+  .timer-btn.running {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(122, 146, 120, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(122, 146, 120, 0); }
+  }
+  .timer-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+  .timer-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .habit.timing {
+    background: linear-gradient(135deg, var(--accent-pale) 0%, white 100%);
+    border-color: var(--accent-light);
   }
 
-  /* Water tracker */
+  /* Water tracker card */
   .water {
     background: white;
     border: 1px solid var(--border);
@@ -273,164 +423,227 @@
     box-shadow: var(--shadow);
   }
   .water-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    display: flex; justify-content: space-between; align-items: baseline;
     margin-bottom: 14px;
   }
-  .water-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ink);
-  }
+  .water-title { font-size: 15px; font-weight: 600; color: var(--ink); }
   .water-amount {
     font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--sage-dark);
+    font-size: 22px; font-weight: 600; color: var(--accent-dark);
   }
-  .water-amount .total {
-    color: var(--muted);
-    font-weight: 500;
-    font-size: 16px;
-  }
+  .water-amount .total { color: var(--muted); font-weight: 500; font-size: 16px; }
   .water-bar {
-    height: 10px;
-    background: var(--sage-pale);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 14px;
+    height: 10px; background: var(--accent-pale);
+    border-radius: 10px; overflow: hidden; margin-bottom: 14px;
   }
   .water-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--sage-light), var(--sage));
-    border-radius: 10px;
-    transition: width 0.4s ease;
+    background: linear-gradient(90deg, var(--accent-light), var(--accent));
+    border-radius: 10px; transition: width 0.4s ease;
   }
-  .water-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  .water-controls { display: flex; gap: 8px; align-items: center; }
   .water-btn {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid var(--sage);
+    flex: 1; padding: 10px 14px;
+    border: 1px solid var(--accent);
     background: white;
-    color: var(--sage-dark);
+    color: var(--accent-dark);
     border-radius: 10px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
   }
-  .water-btn:hover { background: var(--sage); color: white; }
+  .water-btn:hover { background: var(--accent); color: white; }
   .water-btn.minus { flex: 0 0 auto; padding: 10px 14px; }
-  .water-meta {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 10px;
-    text-align: center;
-  }
-  .habit-meta .streak-label { color: var(--muted); font-weight: 500; }
+  .water-meta { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
 
-  /* Timer */
-  .timer-btn {
-    flex-shrink: 0;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--sage);
+  /* ==========================================================
+     CHORE CARDS
+     ========================================================== */
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin: 18px 0 10px 4px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .chores { display: flex; flex-direction: column; gap: 10px; }
+  .chore {
     background: white;
-    color: var(--sage-dark);
-    font-family: inherit;
-    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+  }
+  .chore:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); }
+  .chore.fresh {
+    background: linear-gradient(135deg, rgba(122, 146, 120, 0.08), white);
+    border-color: rgba(122, 146, 120, 0.25);
+  }
+  .chore.overdue {
+    background: linear-gradient(135deg, var(--accent-pale), white);
+    border-color: var(--accent-light);
+  }
+  .chore.urgent {
+    background: linear-gradient(135deg, rgba(184, 114, 28, 0.12), white);
+    border-color: rgba(184, 114, 28, 0.35);
+  }
+  .chore-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--cream); border-radius: 10px;
+  }
+  .chore.fresh .chore-icon { background: rgba(122, 146, 120, 0.15); }
+  .chore.overdue .chore-icon { background: var(--accent-pale); }
+  .chore.urgent .chore-icon { background: rgba(184, 114, 28, 0.15); }
+  .chore-body { flex: 1; min-width: 0; }
+  .chore-name { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .chore-meta {
+    font-size: 12px; color: var(--muted);
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  .chore-meta .never { color: var(--warn); font-weight: 600; }
+  .chore-meta .urgent-tag { color: var(--warn); font-weight: 600; }
+  .chore-meta .fresh-tag { color: #5C7A5C; font-weight: 600; }
+
+  .done-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border: 1px solid var(--accent);
+    background: white;
+    color: var(--accent-dark);
+    border-radius: 10px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .done-btn:hover { background: var(--accent); color: white; transform: translateY(-1px); }
+  .done-btn:active { transform: translateY(0); }
+  .chore.fresh .done-btn { border-color: #5C7A5C; color: #5C7A5C; }
+  .chore.fresh .done-btn:hover { background: #5C7A5C; color: white; }
+
+  /* Count stepper for laundry */
+  .count-stepper {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    background: white;
+    border: 1px solid #5C7A5C;
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .count-step-btn {
+    width: 28px; height: 28px;
+    border: none; background: transparent;
+    color: #5C7A5C;
+    font-size: 18px; font-weight: 600;
+    cursor: pointer; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease;
+    padding: 0; line-height: 1;
+  }
+  .count-step-btn:hover { background: rgba(122, 146, 120, 0.15); }
+  .count-value {
+    min-width: 56px; text-align: center;
+    font-family: 'Fraunces', serif;
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    line-height: 1;
+  }
+  .count-value .num { font-size: 18px; color: #5C7A5C; }
+  .count-value .unit {
+    font-size: 10px; color: var(--muted);
+    font-family: 'Manrope', sans-serif; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    display: block; margin-top: 1px;
+  }
+
+  /* Recently done banner */
+  .recent-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(122, 146, 120, 0.08);
+    border: 1px solid rgba(122, 146, 120, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px; color: var(--ink-soft);
+    margin-bottom: 16px;
+    animation: slideDown 0.3s ease;
+  }
+  .recent-banner .undo-btn {
+    background: none; border: none;
+    color: #5C7A5C;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 78px;
-    justify-content: center;
+    font-family: inherit; font-size: 13px;
+    text-decoration: underline;
+    padding: 0; margin-left: auto;
   }
-  .timer-btn:hover { background: var(--sage-pale); }
-  .timer-btn.running {
-    background: var(--sage);
-    color: white;
-    border-color: var(--sage);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(122, 146, 120, 0.5); }
-    50% { box-shadow: 0 0 0 6px rgba(122, 146, 120, 0); }
-  }
-  .timer-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
-  .timer-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: currentColor;
-  }
-  .habit.timing {
-    background: linear-gradient(135deg, var(--sage-pale) 0%, white 100%);
-    border-color: var(--sage-light);
-  }
-  .habit-meta .time-today {
-    color: var(--sage-dark);
-    font-weight: 600;
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Calendar */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .empty-state .icon-large { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500; font-style: italic;
+    font-size: 22px; color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .empty-state p { font-size: 14px; }
+
+  /* Today actions */
+  .today-actions {
+    display: flex; justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+
+  /* ==========================================================
+     CALENDAR
+     ========================================================== */
   .cal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 20px;
   }
   .cal-title {
     font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
   }
-  .cal-title em { font-style: italic; color: var(--sage-dark); font-weight: 500; }
+  .cal-title em { font-style: italic; color: var(--accent-dark); font-weight: 500; }
   .cal-nav { display: flex; gap: 6px; }
   .cal-btn {
     width: 36px; height: 36px;
     border: 1px solid var(--border);
-    background: white;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--ink-soft);
+    background: white; border-radius: 10px;
+    cursor: pointer; font-size: 16px; color: var(--ink-soft);
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s ease;
   }
-  .cal-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .cal-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
 
-  .habit-picker {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
+  .item-picker {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;
   }
-  .habit-chip {
+  .item-chip {
     padding: 7px 14px;
     border: 1px solid var(--border);
     background: white;
     border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 13px; font-weight: 500;
     color: var(--ink-soft);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    cursor: pointer; transition: all 0.2s ease;
     font-family: inherit;
   }
-  .habit-chip:hover { border-color: var(--sage); }
-  .habit-chip.active {
-    background: var(--sage-dark);
-    color: white;
-    border-color: var(--sage-dark);
+  .item-chip:hover { border-color: var(--accent); }
+  .item-chip.active {
+    background: var(--accent-dark);
+    color: white; border-color: var(--accent-dark);
   }
+  .item-chip.all-mode.active { background: var(--ink-soft); border-color: var(--ink-soft); }
 
   .calendar {
     background: white;
@@ -440,72 +653,144 @@
     box-shadow: var(--shadow);
   }
   .cal-weekdays, .cal-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
   }
-  .cal-weekdays {
-    margin-bottom: 10px;
-  }
+  .cal-weekdays { margin-bottom: 10px; }
   .wd {
     text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
     padding: 6px 0;
   }
   .day {
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--ink-soft);
     border-radius: 8px;
-    position: relative;
-    font-weight: 500;
+    position: relative; font-weight: 500;
+    transition: background 0.15s ease;
   }
+  .day:not(.empty):not(.future) { cursor: pointer; }
+  .day:not(.empty):not(.future):hover { background: var(--cream-dark); }
   .day.empty { visibility: hidden; }
-  .day.done {
-    background: var(--sage);
-    color: white;
-    font-weight: 600;
-  }
-  .day.partial {
-    background: var(--sage-light);
-    color: var(--ink);
-  }
-  .day.today {
-    box-shadow: 0 0 0 2px var(--warn);
-  }
+  .day.done { background: var(--accent); color: white; font-weight: 600; }
+  .day.partial { background: var(--accent-light); color: var(--ink); }
+  .day.today { box-shadow: 0 0 0 2px var(--ink); }
   .day.future { color: var(--border); }
-
+  .day .count-dot {
+    position: absolute;
+    top: 3px; right: 4px;
+    font-size: 9px; font-weight: 700;
+    background: var(--ink); color: var(--cream);
+    border-radius: 999px;
+    padding: 1px 5px; line-height: 1.4;
+  }
   .legend {
-    display: flex;
-    gap: 16px;
+    display: flex; gap: 16px;
     justify-content: center;
-    margin-top: 18px;
-    padding-top: 16px;
+    margin-top: 18px; padding-top: 16px;
     border-top: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--muted);
+    font-size: 12px; color: var(--muted);
+    flex-wrap: wrap;
   }
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-sq {
-    width: 12px; height: 12px;
-    border-radius: 3px;
-  }
-  .legend-sq.done { background: var(--sage); }
-  .legend-sq.partial { background: var(--sage-light); }
+  .legend-sq { width: 12px; height: 12px; border-radius: 3px; }
+  .legend-sq.done { background: var(--accent); }
+  .legend-sq.partial { background: var(--accent-light); }
   .legend-sq.empty { background: white; border: 1px solid var(--border); }
 
+  .day-detail {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+  }
+  .day-detail-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 600;
+    margin-bottom: 10px; color: var(--ink);
+  }
+  .day-detail-title em { font-style: italic; color: var(--accent-dark); font-weight: 500; }
+  .day-detail-list { display: flex; flex-direction: column; gap: 6px; }
+  .day-detail-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    background: var(--cream);
+    border-radius: 8px;
+    font-size: 14px;
+    position: relative;
+  }
+  .day-row-content { flex: 1; display: flex; align-items: center; gap: 10px; }
+  .day-detail-row .icon-mini { font-size: 16px; width: 24px; text-align: center; }
+  .day-detail-empty {
+    text-align: center;
+    color: var(--muted); font-size: 13px;
+    padding: 16px; font-style: italic;
+  }
+  .row-remove-btn {
+    width: 26px; height: 26px;
+    border: none; background: transparent;
+    color: var(--muted);
+    border-radius: 50%; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+    padding: 0; flex-shrink: 0;
+  }
+  .row-remove-btn:hover { background: rgba(184, 114, 28, 0.15); color: var(--warn); }
+  .row-count-stepper {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-left: auto;
+  }
+  .row-count-btn {
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    background: white; color: var(--accent-dark);
+    border-radius: 50%; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; line-height: 1;
+  }
+  .row-count-btn:hover { border-color: var(--accent); }
+  .row-count-num {
+    font-family: 'Fraunces', serif;
+    font-size: 13px; font-weight: 600; color: var(--accent-dark);
+    min-width: 20px; text-align: center;
+  }
+  .day-editor-add {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .add-label {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .add-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .add-chip {
+    padding: 6px 12px;
+    border: 1px dashed var(--accent);
+    background: white;
+    color: var(--accent-dark);
+    border-radius: 999px;
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .add-chip:hover { background: var(--accent-pale); border-style: solid; }
+  .day-editor-empty-add {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px; font-style: italic;
+    padding: 8px;
+  }
+
+  /* Stats */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin-top: 20px;
+    gap: 12px; margin-top: 20px;
   }
   .stat-card {
     background: white;
@@ -514,34 +799,119 @@
     padding: 16px;
     box-shadow: var(--shadow);
   }
-  .stat-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink);
-    margin-bottom: 8px;
-  }
+  .stat-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .stat-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--muted);
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted);
     margin-bottom: 3px;
   }
   .stat-row .v {
     font-family: 'Fraunces', serif;
-    color: var(--sage-dark);
-    font-weight: 600;
-    font-size: 14px;
+    color: var(--accent-dark); font-weight: 600; font-size: 14px;
   }
 
-  @media (max-width: 500px) {
-    .brand { font-size: 26px; }
-    .summary { padding: 16px 18px; }
-    .summary-text .value { font-size: 22px; }
-    .tab { padding: 8px 14px; font-size: 13px; }
+  /* ==========================================================
+     PLAN TAB
+     ========================================================== */
+  .plan-intro {
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 16px; line-height: 1.5;
   }
+  .plan-list { display: flex; flex-direction: column; gap: 10px; }
+  .plan-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+  }
+  .plan-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); }
+  .plan-card.due-overdue {
+    background: linear-gradient(135deg, rgba(184, 114, 28, 0.10), white);
+    border-color: rgba(184, 114, 28, 0.35);
+  }
+  .plan-card.due-today {
+    background: linear-gradient(135deg, var(--accent-pale), white);
+    border-color: var(--accent-light);
+  }
+  .plan-top {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .plan-body { flex: 1; min-width: 0; }
+  .plan-name { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .plan-name .source-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 4px;
+    margin-left: 6px; vertical-align: 1px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--accent-pale); color: var(--accent-dark);
+  }
+  .plan-name .source-badge.standalone { background: var(--cream-dark); color: var(--muted); }
+  .plan-meta { font-size: 12px; color: var(--muted); }
+  .due-tag {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 12px; font-weight: 600;
+  }
+  .due-tag .due-when {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+  }
+  .due-tag.overdue { color: var(--warn); }
+  .due-tag.today { color: var(--accent-dark); }
+  .due-tag.upcoming { color: var(--ink-soft); }
+  .due-tag .due-date { font-weight: 500; color: var(--muted); font-size: 11px; }
+  .plan-bottom {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .freq-stepper {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .freq-stepper .freq-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 600; color: var(--accent-dark);
+    font-size: 15px;
+    min-width: 22px; text-align: center;
+  }
+  .plan-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .plan-done-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--accent);
+    background: white; color: var(--accent-dark);
+    border-radius: 999px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .plan-done-btn:hover { background: var(--accent); color: white; }
+  .plan-add-row { margin-top: 16px; }
 
-  /* Settings */
+  /* Plan add modal source chips */
+  .source-group-label {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 12px 0 6px;
+  }
+  .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .new-task-fields {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+  .modal-scroll { max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ==========================================================
+     SETTINGS
+     ========================================================== */
   .settings-section {
     background: white;
     border: 1px solid var(--border);
@@ -556,70 +926,48 @@
   }
   .section-title {
     font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 22px; font-weight: 600;
     letter-spacing: -0.01em;
-    margin-bottom: 6px;
-    color: var(--ink);
+    margin-bottom: 6px; color: var(--ink);
   }
-  .section-title em {
-    font-style: italic;
-    font-weight: 500;
-    color: var(--sage-dark);
-  }
+  .section-title em { font-style: italic; font-weight: 500; color: var(--accent-dark); }
   .section-hint {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    line-height: 1.5;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 16px; line-height: 1.5;
   }
-
-  .habit-manager {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .settings-mode-label {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--accent-pale);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .item-manager {
+    display: flex; flex-direction: column; gap: 8px;
     margin-bottom: 14px;
   }
   .manage-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 12px 14px;
     background: var(--cream);
     border: 1px solid var(--border);
     border-radius: 10px;
   }
-  .manage-row.hidden-habit {
-    opacity: 0.55;
-  }
-  .manage-handle {
-    cursor: grab;
-    color: var(--muted);
-    font-size: 18px;
-    line-height: 1;
-    -webkit-user-select: none;
-    user-select: none;
-    padding: 2px 4px;
-  }
-  .manage-handle:active { cursor: grabbing; }
-  .manage-name {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ink);
-  }
+  .manage-row.hidden-item { opacity: 0.55; }
+  .manage-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--ink); }
   .manage-name .badge {
     display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--sage-dark);
-    background: var(--sage-pale);
+    font-size: 10px; font-weight: 600;
+    color: var(--accent-dark); background: var(--accent-pale);
     padding: 2px 6px;
     border-radius: 4px;
-    margin-left: 6px;
-    vertical-align: 1px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    margin-left: 6px; vertical-align: 1px;
+    text-transform: uppercase; letter-spacing: 0.04em;
   }
   .manage-name .badge.hidden { background: var(--cream-dark); color: var(--muted); }
   .icon-btn {
@@ -628,79 +976,32 @@
     background: white;
     border-radius: 8px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--ink-soft);
     transition: all 0.15s ease;
     padding: 0;
   }
-  .icon-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
   .icon-btn.danger:hover { border-color: var(--warn); color: var(--warn); }
+  .backup-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .last-backup { font-size: 12px; color: var(--muted); margin-top: 12px; font-style: italic; }
 
-  .primary-btn {
-    padding: 11px 18px;
-    background: var(--sage-dark);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .primary-btn:hover { background: var(--sage); transform: translateY(-1px); }
-  .secondary-btn {
-    padding: 11px 18px;
-    background: white;
-    color: var(--sage-dark);
-    border: 1px solid var(--sage);
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .secondary-btn:hover { background: var(--sage-pale); }
-  .danger-btn {
-    padding: 11px 18px;
-    background: white;
-    color: var(--warn);
-    border: 1px solid var(--warn);
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .danger-btn:hover { background: var(--warn); color: white; }
-
-  .backup-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .last-backup {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 12px;
-    font-style: italic;
+  .app-version {
+    text-align: center;
+    font-size: 11px; color: var(--muted);
+    margin-top: 24px;
+    letter-spacing: 0.06em;
   }
 
-  /* Modal */
+  /* ==========================================================
+     MODALS
+     ========================================================== */
   .modal-backdrop {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(44, 58, 46, 0.4);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
     z-index: 100;
     animation: fadeIn 0.2s ease;
@@ -710,8 +1011,7 @@
     border: 1px solid var(--border);
     border-radius: 18px;
     padding: 24px;
-    width: 100%;
-    max-width: 380px;
+    width: 100%; max-width: 380px;
     box-shadow: 0 20px 50px rgba(44, 58, 46, 0.2);
     animation: scaleIn 0.2s ease;
   }
@@ -721,58 +1021,52 @@
   }
   .modal-title {
     font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 18px;
-    color: var(--ink);
+    font-size: 22px; font-weight: 600;
+    margin-bottom: 18px; color: var(--ink);
   }
   .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: flex; flex-direction: column; gap: 6px;
     margin-bottom: 14px;
   }
   .field span {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
   }
-  .field input[type="text"] {
+  .field input[type="text"], .field input[type="date"], .field input[type="number"] {
     padding: 11px 14px;
     background: white;
     border: 1px solid var(--border);
     border-radius: 10px;
     font-family: inherit;
-    font-size: 15px;
-    color: var(--ink);
+    font-size: 15px; color: var(--ink);
     outline: none;
     transition: border-color 0.2s ease;
-    -webkit-user-select: auto;
-    user-select: auto;
+    -webkit-user-select: auto; user-select: auto;
+    box-sizing: border-box;
+    -webkit-appearance: none; appearance: none;
+    min-height: 44px;
+    display: block;
+    width: 100%;
   }
-  .field input[type="text"]:focus { border-color: var(--sage); }
+  .field input:focus { border-color: var(--accent); }
+  .field input[type="date"]::-webkit-date-and-time-value {
+    text-align: left; min-height: 1.4em;
+  }
   .checkbox-field {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
+    flex-direction: row; align-items: center; gap: 10px;
     padding: 10px 14px;
     background: white;
     border: 1px solid var(--border);
     border-radius: 10px;
   }
-  .checkbox-field input { width: 18px; height: 18px; accent-color: var(--sage-dark); }
+  .checkbox-field input { width: 18px; height: 18px; accent-color: var(--accent-dark); }
   .checkbox-field span {
-    font-size: 14px;
-    color: var(--ink);
-    text-transform: none;
-    letter-spacing: 0;
+    font-size: 14px; color: var(--ink);
+    text-transform: none; letter-spacing: 0;
     font-weight: 500;
   }
   .modal-actions {
-    display: flex;
-    gap: 10px;
+    display: flex; gap: 10px;
     margin-top: 18px;
   }
   .modal-actions button { flex: 1; }
@@ -780,15 +1074,12 @@
   /* Toast */
   .toast {
     position: fixed;
-    bottom: 24px;
-    left: 50%;
+    bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: var(--ink);
-    color: var(--cream);
+    background: var(--ink); color: var(--cream);
     padding: 12px 20px;
     border-radius: 999px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 14px; font-weight: 500;
     box-shadow: 0 8px 20px rgba(44, 58, 46, 0.25);
     opacity: 0;
     transition: all 0.3s ease;
@@ -807,11 +1098,8 @@
     border-radius: 12px;
     padding: 12px 14px;
     margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 13px;
-    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--ink-soft);
   }
   .backup-banner .msg { flex: 1; }
   .backup-banner .banner-close {
@@ -819,113 +1107,207 @@
     color: var(--muted); font-size: 18px; padding: 4px;
   }
   .backup-banner .banner-action {
-    color: var(--warn);
-    font-weight: 600;
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: inherit;
-    font-size: 13px;
-    padding: 0;
-    text-decoration: underline;
+    color: var(--warn); font-weight: 600; cursor: pointer;
+    background: none; border: none;
+    font-family: inherit; font-size: 13px;
+    padding: 0; text-decoration: underline;
+  }
+
+  @media (max-width: 500px) {
+    .brand { font-size: 24px; }
+    .summary { padding: 16px 18px; }
+    .summary-text .value { font-size: 20px; }
+    .mode-btn { padding: 8px 16px; font-size: 12px; }
   }
 </style>
 </head>
-<body>
+<body class="mode-habits">
 <div class="container">
+
+  <!-- MODE SWITCHER -->
+  <div class="mode-switcher">
+    <button class="mode-btn active" data-mode="habits"><span class="mode-icon">🌱</span>Personal</button>
+    <button class="mode-btn" data-mode="chores"><span class="mode-icon">🏠</span>Household</button>
+  </div>
+
+  <!-- HEADER -->
   <header>
-    <div class="brand">Daily<em> rituals</em></div>
-    <div class="date-stamp" id="dateStamp">
+    <div class="brand" id="brandTitle"><span id="brandFirst">Daily</span><em id="brandSecond"> rituals</em></div>
+    <div class="date-stamp">
       <span id="monthLabel">—</span>
       <span class="day" id="dayLabel">—</span>
     </div>
   </header>
 
+  <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" data-tab="today">Today</button>
-    <button class="tab" data-tab="calendar">Calendar</button>
-    <button class="tab" data-tab="settings">Settings</button>
+    <button class="tab active" data-tab="today"><span class="tab-icon">☀️</span>Today</button>
+    <button class="tab" data-tab="calendar"><span class="tab-icon">🗓️</span>Calendar</button>
+    <button class="tab" data-tab="plan"><span class="tab-icon">📌</span>Plan</button>
+    <button class="tab" data-tab="settings"><span class="tab-icon">⚙️</span>Settings</button>
   </div>
 
-  <!-- TODAY VIEW -->
-  <div class="view active" id="view-today">
-    <div id="backupBannerSlot"></div>
-    <div class="summary">
-      <div class="summary-text">
-        <div class="label">Today's progress</div>
-        <div class="value"><em id="doneCount">0</em> of <span id="totalCount">8</span> complete</div>
+  <!-- ============================================================
+       PERSONAL (habits engine) MODULE
+       ============================================================ -->
+  <div class="mode-app" data-mode="habits">
+
+    <!-- TODAY -->
+    <div class="view active" id="habits-view-today">
+      <div id="habits-backupBanner"></div>
+      <div class="summary">
+        <div class="summary-text">
+          <div class="label">Today's progress</div>
+          <div class="value"><em id="habits-doneCount">0</em> of <span id="habits-totalCount">0</span> complete</div>
+        </div>
+        <div class="ring">
+          <svg width="60" height="60">
+            <circle class="bg" cx="30" cy="30" r="25"></circle>
+            <circle class="fg" id="habits-progressRing" cx="30" cy="30" r="25" stroke-dasharray="157" stroke-dashoffset="157"></circle>
+          </svg>
+          <div class="ring-text" id="habits-ringText">0%</div>
+        </div>
       </div>
-      <div class="ring">
-        <svg width="64" height="64">
-          <circle class="bg" cx="32" cy="32" r="27"></circle>
-          <circle class="fg" id="progressRing" cx="32" cy="32" r="27" stroke-dasharray="169.6" stroke-dashoffset="169.6"></circle>
-        </svg>
-        <div class="ring-text" id="ringText">0%</div>
-      </div>
+      <div class="habits" id="habits-list"></div>
     </div>
 
-    <div class="habits" id="habitsList"></div>
+    <!-- CALENDAR -->
+    <div class="view" id="habits-view-calendar">
+      <div class="cal-header">
+        <div class="cal-title"><em id="habits-calMonth">—</em> <span id="habits-calYear">—</span></div>
+        <div class="cal-nav">
+          <button class="cal-btn" id="habits-prevMonth">‹</button>
+          <button class="cal-btn" id="habits-nextMonth">›</button>
+        </div>
+      </div>
+      <div class="item-picker" id="habits-picker"></div>
+      <div class="calendar">
+        <div class="cal-weekdays">
+          <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+          <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+        </div>
+        <div class="cal-days" id="habits-calDays"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-sq done"></span>Complete</div>
+          <div class="legend-item"><span class="legend-sq partial"></span>Partial</div>
+          <div class="legend-item"><span class="legend-sq empty"></span>None</div>
+        </div>
+      </div>
+      <div class="stats-grid" id="habits-statsGrid"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="habits-view-settings">
+      <div class="settings-section">
+        <h2 class="section-title">Your <em>habits</em><span class="settings-mode-label">Personal</span></h2>
+        <p class="section-hint">Reorder, edit, or remove. Tracking history is kept even if you remove a habit (hidden, not deleted).</p>
+        <div class="item-manager" id="habits-manager"></div>
+        <button class="primary-btn" id="habits-addBtn">+ Add new habit</button>
+      </div>
+      <div class="settings-section">
+        <h2 class="section-title">Backup &amp; <em>restore</em></h2>
+        <p class="section-hint">Export your personal data to a file. Restore it later or on another device.</p>
+        <div class="backup-row">
+          <button class="primary-btn" id="habits-exportBtn">⬇ Export backup</button>
+          <button class="secondary-btn" id="habits-importBtn">⬆ Import backup</button>
+          <input type="file" id="habits-importFile" accept="application/json" style="display:none">
+        </div>
+        <div class="last-backup" id="habits-lastBackup"></div>
+      </div>
+      <div class="settings-section danger-zone">
+        <h2 class="section-title">Reset</h2>
+        <p class="section-hint">Wipe all personal habit data. This cannot be undone — export first.</p>
+        <button class="danger-btn" id="habits-resetBtn">Reset personal data</button>
+      </div>
+    </div>
   </div>
 
-  <!-- CALENDAR VIEW -->
-  <div class="view" id="view-calendar">
-    <div class="cal-header">
-      <div class="cal-title"><em id="calMonth">—</em> <span id="calYear">—</span></div>
-      <div class="cal-nav">
-        <button class="cal-btn" id="prevMonth">‹</button>
-        <button class="cal-btn" id="nextMonth">›</button>
+  <!-- ============================================================
+       HOUSEHOLD (chores engine) MODULE
+       ============================================================ -->
+  <div class="mode-app" data-mode="chores">
+
+    <!-- TODAY -->
+    <div class="view active" id="chores-view-today">
+      <div id="chores-backupBanner"></div>
+      <div id="chores-recentBanner"></div>
+      <div class="today-actions">
+        <button class="link-btn" id="chores-logPastBtn">📅 Log for past date</button>
       </div>
+      <div id="chores-container"></div>
     </div>
 
-    <div class="habit-picker" id="habitPicker"></div>
-
-    <div class="calendar">
-      <div class="cal-weekdays">
-        <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
-        <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+    <!-- CALENDAR -->
+    <div class="view" id="chores-view-calendar">
+      <div class="cal-header">
+        <div class="cal-title"><em id="chores-calMonth">—</em> <span id="chores-calYear">—</span></div>
+        <div class="cal-nav">
+          <button class="cal-btn" id="chores-prevMonth">‹</button>
+          <button class="cal-btn" id="chores-nextMonth">›</button>
+        </div>
       </div>
-      <div class="cal-days" id="calDays"></div>
-      <div class="legend">
-        <div class="legend-item"><span class="legend-sq done"></span>Complete</div>
-        <div class="legend-item"><span class="legend-sq partial"></span>Partial</div>
-        <div class="legend-item"><span class="legend-sq empty"></span>None</div>
+      <div class="item-picker" id="chores-picker"></div>
+      <div class="calendar">
+        <div class="cal-weekdays">
+          <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+          <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+        </div>
+        <div class="cal-days" id="chores-calDays"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-sq done"></span><span id="chores-legendDone">Done</span></div>
+          <div class="legend-item"><span class="legend-sq empty"></span>None</div>
+        </div>
       </div>
+      <div id="chores-dayDetail"></div>
+      <div class="stats-grid" id="chores-statsGrid"></div>
     </div>
 
-    <div class="stats-grid" id="statsGrid"></div>
+    <!-- SETTINGS -->
+    <div class="view" id="chores-view-settings">
+      <div class="settings-section">
+        <h2 class="section-title">Your <em>chores</em><span class="settings-mode-label">Household</span></h2>
+        <p class="section-hint">Edit, hide, or remove. Tracking history is kept when you hide a chore.</p>
+        <div class="item-manager" id="chores-manager"></div>
+        <button class="primary-btn" id="chores-addBtn">+ Add new chore</button>
+      </div>
+      <div class="settings-section">
+        <h2 class="section-title">Restore <em>defaults</em></h2>
+        <p class="section-hint">Replace your current chore list with the latest defaults from the app. Your tracking history won't be touched.</p>
+        <button class="secondary-btn" id="chores-restoreDefaultsBtn">↻ Restore default chore list</button>
+      </div>
+      <div class="settings-section">
+        <h2 class="section-title">Backup &amp; <em>restore</em></h2>
+        <p class="section-hint">Export your household data. Recommended weekly.</p>
+        <div class="backup-row">
+          <button class="primary-btn" id="chores-exportBtn">⬇ Export backup</button>
+          <button class="secondary-btn" id="chores-importBtn">⬆ Import backup</button>
+          <input type="file" id="chores-importFile" accept="application/json" style="display:none">
+        </div>
+        <div class="last-backup" id="chores-lastBackup"></div>
+      </div>
+      <div class="settings-section danger-zone">
+        <h2 class="section-title">Reset</h2>
+        <p class="section-hint">Wipe all household chore data. Cannot be undone — export first.</p>
+        <button class="danger-btn" id="chores-resetBtn">Reset household data</button>
+      </div>
+    </div>
   </div>
 
-  <!-- SETTINGS VIEW -->
-  <div class="view" id="view-settings">
-    <div class="settings-section">
-      <h2 class="section-title">Your <em>habits</em></h2>
-      <p class="section-hint">Reorder, edit, or remove. Your tracking history is kept even if you remove a habit (hidden, not deleted).</p>
-      <div class="habit-manager" id="habitManager"></div>
-      <button class="primary-btn" id="addHabitBtn">+ Add new habit</button>
-    </div>
-
-    <div class="settings-section">
-      <h2 class="section-title">Backup & <em>restore</em></h2>
-      <p class="section-hint">Export a copy of your data to a file. You can restore it later or on another device. Recommended: back up weekly.</p>
-      <div class="backup-row">
-        <button class="primary-btn" id="exportBtn">⬇ Export backup</button>
-        <button class="secondary-btn" id="importBtn">⬆ Import backup</button>
-        <input type="file" id="importFile" accept="application/json" style="display:none">
-      </div>
-      <div class="last-backup" id="lastBackup"></div>
-    </div>
-
-    <div class="settings-section danger-zone">
-      <h2 class="section-title">Reset</h2>
-      <p class="section-hint">Wipe all tracking data. This cannot be undone — export first.</p>
-      <button class="danger-btn" id="resetBtn">Reset all data</button>
+  <!-- ============================================================
+       PLAN TAB (shared across Personal + Household)
+       ============================================================ -->
+  <div class="view" id="plan-view">
+    <p class="plan-intro">Plan how often each task should happen. Pick from your Personal or Household lists — the app suggests a frequency from your actual history — or add planner-only tasks. Sorted by what's due soonest.</p>
+    <div class="plan-list" id="plan-list"></div>
+    <div class="plan-add-row">
+      <button class="primary-btn" id="plan-addBtn">+ Plan a task</button>
     </div>
   </div>
 
   <!-- HABIT EDIT MODAL -->
   <div class="modal-backdrop" id="habitModal" style="display:none">
     <div class="modal">
-      <h3 class="modal-title" id="modalTitle">Add habit</h3>
+      <h3 class="modal-title" id="habitModalTitle">Add habit</h3>
       <label class="field">
         <span>Icon (emoji)</span>
         <input type="text" id="habitIcon" maxlength="4" placeholder="🌱">
@@ -939,98 +1321,257 @@
         <span>Include stopwatch</span>
       </label>
       <div class="modal-actions">
-        <button class="secondary-btn" id="modalCancel">Cancel</button>
-        <button class="primary-btn" id="modalSave">Save</button>
+        <button class="secondary-btn" id="habitModalCancel">Cancel</button>
+        <button class="primary-btn" id="habitModalSave">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- CHORE EDIT MODAL -->
+  <div class="modal-backdrop" id="choreModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title" id="choreModalTitle">Add chore</h3>
+      <label class="field">
+        <span>Icon (emoji)</span>
+        <input type="text" id="choreIcon" maxlength="4" placeholder="🧹">
+      </label>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="choreName" maxlength="40" placeholder="e.g. Clean windows">
+      </label>
+      <label class="field checkbox-field">
+        <input type="checkbox" id="choreCounted">
+        <span>Track count per day (e.g. loads, runs)</span>
+      </label>
+      <label class="field" id="choreUnitField" style="display: none;">
+        <span>Unit name (singular)</span>
+        <input type="text" id="choreUnit" maxlength="20" placeholder="load">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="choreModalCancel">Cancel</button>
+        <button class="primary-btn" id="choreModalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATE PICKER MODAL (chores) -->
+  <div class="modal-backdrop" id="dateModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title">Pick a date</h3>
+      <p class="section-hint">Choose a past day to log or edit chores for. Future dates aren't allowed.</p>
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="dateInput">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="dateModalCancel">Cancel</button>
+        <button class="primary-btn" id="dateModalOpen">Open day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN ADD MODAL -->
+  <div class="modal-backdrop" id="planModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title">Plan a task</h3>
+      <div class="modal-scroll">
+        <p class="section-hint">Tap an existing task — a frequency will be suggested from your history — or create a planner-only task below.</p>
+        <div class="source-group-label">🌱 Personal</div>
+        <div class="source-chips" id="plan-habitChips"></div>
+        <div class="source-group-label">🏠 Household</div>
+        <div class="source-chips" id="plan-choreChips"></div>
+        <div class="new-task-fields">
+          <div class="source-group-label">✏️ New planner-only task</div>
+          <label class="field">
+            <span>Icon (emoji)</span>
+            <input type="text" id="planIcon" maxlength="4" placeholder="🪴">
+          </label>
+          <label class="field">
+            <span>Name</span>
+            <input type="text" id="planName" maxlength="40" placeholder="e.g. Water the plants">
+          </label>
+          <label class="field">
+            <span>Every how many days?</span>
+            <input type="number" id="planFreq" min="1" max="365" value="7" inputmode="numeric">
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="planModalCancel">Cancel</button>
+        <button class="primary-btn" id="planModalSave">Add new task</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
+  <div class="app-version" id="appVersion"></div>
 </div>
 
 <script>
-  // ============ CONFIG ============
-  const DEFAULT_HABITS = [
-    { id: 'read',       name: 'Read a book',        icon: '📖', timer: true },
-    { id: 'workout',    name: 'Workout',            icon: '🏋️', timer: true },
-    { id: 'poop',       name: 'Poop',               icon: '💩' },
-    { id: 'psychology', name: 'Learn psychology',   icon: '🧠' },
-    { id: 'french',     name: 'Learn French',       icon: '🇫🇷' },
-    { id: 'supplements',name: 'Take supplements',   icon: '💊' },
-    { id: 'water',      name: 'Drink water',        icon: '💧', type: 'quantity', unit: 'ml', step: 400, goal: 2500 },
+// ============================================================
+// VERSION
+// ============================================================
+const APP_VERSION = '2.2';
+document.getElementById('appVersion').textContent = 'Tracker v' + APP_VERSION;
+
+// ============================================================
+// SHARED UTILITIES
+// ============================================================
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function daysBetween(k1, k2) {
+  const d1 = new Date(k1), d2 = new Date(k2);
+  return Math.round((d2 - d1) / 86400000);
+}
+function addDaysToKey(key, n) {
+  const d = new Date(key + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return dateKey(d);
+}
+function formatShortDate(key) {
+  const d = new Date(key + 'T00:00:00');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+}
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// STATE: current mode + tab, theme switcher
+// ============================================================
+let currentMode = localStorage.getItem('tracker_currentMode') || 'habits';
+let currentTab = 'today';
+
+function setMode(mode) {
+  currentMode = mode;
+  localStorage.setItem('tracker_currentMode', mode);
+  document.body.className = 'mode-' + mode + (currentTab === 'plan' ? ' plan-open' : '');
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  // Update brand
+  const first = document.getElementById('brandFirst');
+  const second = document.getElementById('brandSecond');
+  if (mode === 'habits') {
+    first.textContent = 'Daily';
+    second.textContent = ' rituals';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#F5F1E8');
+  } else {
+    first.textContent = 'House';
+    second.textContent = 'keeping';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FDF9F0');
+  }
+  // Trigger render of currently visible content
+  setTab(currentTab);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  const planView = document.getElementById('plan-view');
+  if (tab === 'plan') {
+    document.body.classList.add('plan-open');
+    planView.classList.add('active');
+    Plan.render();
+    return;
+  }
+  document.body.classList.remove('plan-open');
+  planView.classList.remove('active');
+  // Show only the relevant view in the active mode
+  document.querySelectorAll('.mode-app').forEach(m => {
+    m.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const targetView = m.querySelector('#' + m.dataset.mode + '-view-' + tab);
+    if (targetView) targetView.classList.add('active');
+  });
+  // Re-render appropriate views
+  if (currentMode === 'habits') {
+    if (tab === 'today') Habits.renderToday();
+    if (tab === 'calendar') { Habits.renderPicker(); Habits.renderCalendar(); Habits.renderStats(); }
+    if (tab === 'settings') { Habits.renderManager(); Habits.renderLastBackup(); }
+  } else {
+    if (tab === 'today') Chores.renderToday();
+    if (tab === 'calendar') { Chores.renderPicker(); Chores.renderCalendar(); Chores.renderDayDetail(); Chores.renderStats(); }
+    if (tab === 'settings') { Chores.renderManager(); Chores.renderLastBackup(); }
+  }
+}
+
+// Render header
+function renderHeader() {
+  const d = new Date();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('monthLabel').textContent = `${months[d.getMonth()]} ${d.getDate()}`;
+  document.getElementById('dayLabel').textContent = days[d.getDay()];
+}
+
+// ============================================================
+// PERSONAL (HABITS) MODULE
+// ============================================================
+const Habits = (() => {
+  const DEFAULTS = [
+    { id: 'read', name: 'Read a book', icon: '📖', timer: true },
+    { id: 'workout', name: 'Workout', icon: '🏋️', timer: true },
+    { id: 'poop', name: 'Poop', icon: '💩' },
+    { id: 'psychology', name: 'Learn psychology', icon: '🧠' },
+    { id: 'french', name: 'Learn French', icon: '🇫🇷' },
+    { id: 'supplements', name: 'Take supplements', icon: '💊' },
+    { id: 'water', name: 'Drink water', icon: '💧', type: 'quantity', unit: 'ml', step: 400, goal: 2500 },
   ];
+  // Migration: try old key habitTrackerData_v1 → habits_data_v1, etc.
+  function migrate() {
+    const oldData = localStorage.getItem('habitTrackerData_v1');
+    if (oldData && !localStorage.getItem('habits_data_v1')) localStorage.setItem('habits_data_v1', oldData);
+    const oldHabits = localStorage.getItem('habitTrackerHabits_v1');
+    if (oldHabits && !localStorage.getItem('habits_items_v1')) localStorage.setItem('habits_items_v1', oldHabits);
+    const oldTimers = localStorage.getItem('habitTrackerTimers_v1');
+    if (oldTimers && !localStorage.getItem('habits_timers_v1')) localStorage.setItem('habits_timers_v1', oldTimers);
+    const oldBackup = localStorage.getItem('habitTrackerLastBackup_v1');
+    if (oldBackup && !localStorage.getItem('habits_lastBackup_v1')) localStorage.setItem('habits_lastBackup_v1', oldBackup);
+    const oldDismiss = localStorage.getItem('habitTrackerBannerDismissed_v1');
+    if (oldDismiss && !localStorage.getItem('habits_bannerDismissed_v1')) localStorage.setItem('habits_bannerDismissed_v1', oldDismiss);
+  }
+  migrate();
 
-  const STORAGE_KEY = 'habitTrackerData_v1';
-  const TIMER_KEY = 'habitTrackerTimers_v1';
-  const HABITS_KEY = 'habitTrackerHabits_v1';
-  const LAST_BACKUP_KEY = 'habitTrackerLastBackup_v1';
-  const BANNER_DISMISS_KEY = 'habitTrackerBannerDismissed_v1';
-
-  let data = loadData();
-  let HABITS = loadHabits();
-  let timers = loadTimers();
+  let data = (() => { try { return JSON.parse(localStorage.getItem('habits_data_v1')) || {}; } catch { return {}; } })();
+  let HABITS = (() => {
+    try { const raw = localStorage.getItem('habits_items_v1'); if (raw) return JSON.parse(raw); } catch {}
+    localStorage.setItem('habits_items_v1', JSON.stringify(DEFAULTS));
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  })();
+  let timers = (() => { try { return JSON.parse(localStorage.getItem('habits_timers_v1')) || {}; } catch { return {}; } })();
   let calDate = new Date();
   let selectedHabit = HABITS[0] ? HABITS[0].id : null;
   let tickInterval = null;
-  let editingHabitId = null;
+  let editingId = null;
 
-  // ============ STORAGE ============
-  function loadData() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  }
-  function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-  function loadHabits() {
-    try {
-      const raw = localStorage.getItem(HABITS_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    // First run: save defaults
-    localStorage.setItem(HABITS_KEY, JSON.stringify(DEFAULT_HABITS));
-    return JSON.parse(JSON.stringify(DEFAULT_HABITS));
-  }
-  function saveHabits() {
-    localStorage.setItem(HABITS_KEY, JSON.stringify(HABITS));
-  }
-  function loadTimers() {
-    try {
-      const raw = localStorage.getItem(TIMER_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  }
-  function saveTimers() {
-    localStorage.setItem(TIMER_KEY, JSON.stringify(timers));
-  }
+  function saveData() { localStorage.setItem('habits_data_v1', JSON.stringify(data)); }
+  function saveItems() { localStorage.setItem('habits_items_v1', JSON.stringify(HABITS)); }
+  function saveTimers() { localStorage.setItem('habits_timers_v1', JSON.stringify(timers)); }
+  function visibleHabits() { return HABITS.filter(h => !h.hidden); }
+  function getDay(key) { if (!data[key]) data[key] = {}; return data[key]; }
 
-  // Only count visible (non-hidden) habits for "Today's progress"
-  function visibleHabits() {
-    return HABITS.filter(h => !h.hidden);
-  }
-  function todayKey() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-  function dateKey(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-  function getDay(key) {
-    if (!data[key]) data[key] = {};
-    return data[key];
-  }
-
-  // ============ HABIT STATUS ============
-  function isComplete(dayData, habit) {
-    if (habit.type === 'quantity') {
-      return (dayData[habit.id] || 0) >= habit.goal;
-    }
+  // v2.0 FIX: a running timer only makes TODAY complete, not every day.
+  // `key` is the date key of the day being evaluated (defaults to today).
+  function isComplete(dayData, habit, key) {
+    if (habit.type === 'quantity') return (dayData[habit.id] || 0) >= habit.goal;
     if (habit.timer) {
-      // Done if manually ticked OR any time logged OR currently timing
-      return !!dayData[habit.id] || (dayData[habit.id + '_ms'] || 0) > 0 || !!timers[habit.id];
+      const runningToday = !!timers[habit.id] && (key === undefined || key === todayKey());
+      return !!dayData[habit.id] || (dayData[habit.id + '_ms'] || 0) > 0 || runningToday;
     }
     return !!dayData[habit.id];
   }
@@ -1039,6 +1580,40 @@
     if (habit.timer) return !!dayData[habit.id] || (dayData[habit.id + '_ms'] || 0) > 0;
     return !!dayData[habit.id];
   }
+  function calcStreaks(habitId) {
+    const habit = HABITS.find(h => h.id === habitId);
+    if (!habit) return { current: 0, longest: 0 };
+    let current = 0, longest = 0, running = 0;
+    const dates = Object.keys(data).sort();
+    let prev = null;
+    for (const key of dates) {
+      const complete = isComplete(data[key], habit, key);
+      if (complete) {
+        if (prev && daysBetween(prev, key) === 1) running++;
+        else running = 1;
+        longest = Math.max(longest, running);
+        prev = key;
+      } else { running = 0; prev = null; }
+    }
+    let d = new Date();
+    if (!isComplete(getDay(dateKey(d)), habit, dateKey(d))) d.setDate(d.getDate() - 1);
+    while (true) {
+      const k = dateKey(d);
+      if (data[k] && isComplete(data[k], habit, k)) {
+        current++;
+        d.setDate(d.getDate() - 1);
+      } else break;
+    }
+    return { current, longest };
+  }
+
+  // For the Plan tab: all date keys where this habit was complete (oldest → newest)
+  function completionDates(habitId) {
+    const habit = HABITS.find(h => h.id === habitId);
+    if (!habit) return [];
+    return Object.keys(data).sort().filter(k => isComplete(data[k], habit, k));
+  }
+
   function formatDuration(ms) {
     if (!ms || ms < 0) ms = 0;
     const totalSec = Math.floor(ms / 1000);
@@ -1055,116 +1630,48 @@
     return stored + running;
   }
 
-  // ============ STREAKS ============
-  function calcStreaks(habitId) {
-    const habit = HABITS.find(h => h.id === habitId);
-    const today = new Date();
-    let current = 0, longest = 0, running = 0;
-
-    // Collect all dates that have data, sorted
-    const dates = Object.keys(data).sort();
-    if (dates.length === 0) return { current: 0, longest: 0 };
-
-    // Walk from earliest to latest to find longest
-    let prev = null;
-    for (const key of dates) {
-      const dayData = data[key];
-      const complete = isComplete(dayData, habit);
-      if (complete) {
-        if (prev && dayDiff(prev, key) === 1) running++;
-        else running = 1;
-        longest = Math.max(longest, running);
-        prev = key;
-      } else {
-        running = 0;
-        prev = null;
-      }
-    }
-
-    // Current streak: walk back from today
-    let d = new Date(today);
-    // If today not done, start from yesterday
-    if (!isComplete(getDay(dateKey(d)), habit)) {
-      d.setDate(d.getDate() - 1);
-    }
-    while (true) {
-      const k = dateKey(d);
-      if (data[k] && isComplete(data[k], habit)) {
-        current++;
-        d.setDate(d.getDate() - 1);
-      } else break;
-    }
-
-    return { current, longest };
-  }
-  function dayDiff(k1, k2) {
-    const d1 = new Date(k1), d2 = new Date(k2);
-    return Math.round((d2 - d1) / 86400000);
-  }
-
-  // ============ RENDER: HEADER ============
-  function renderHeader() {
-    const d = new Date();
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    document.getElementById('monthLabel').textContent = `${months[d.getMonth()]} ${d.getDate()}`;
-    document.getElementById('dayLabel').textContent = days[d.getDay()];
-  }
-
-  // ============ RENDER: TODAY ============
   function renderToday() {
-    const key = todayKey();
-    const dayData = getDay(key);
-    const list = document.getElementById('habitsList');
+    renderBackupBanner();
+    const list = document.getElementById('habits-list');
     list.innerHTML = '';
-
     const vis = visibleHabits();
     let done = 0;
     const total = vis.length;
-
-    vis.forEach(habit => {
-      const complete = isComplete(dayData, habit);
-      if (complete) done++;
-      const streaks = calcStreaks(habit.id);
-
-      if (habit.type === 'quantity') {
-        list.appendChild(renderWaterCard(habit, dayData, streaks));
-      } else {
-        list.appendChild(renderBinaryCard(habit, dayData, streaks, complete));
-      }
+    const tKey = todayKey();
+    const dayData = getDay(tKey);
+    vis.forEach(h => {
+      if (isComplete(dayData, h, tKey)) done++;
+      const streaks = calcStreaks(h.id);
+      if (h.type === 'quantity') list.appendChild(renderWaterCard(h, dayData, streaks));
+      else list.appendChild(renderBinaryCard(h, dayData, streaks, isComplete(dayData, h, tKey)));
     });
-
-    // Summary
-    document.getElementById('doneCount').textContent = done;
-    document.getElementById('totalCount').textContent = total;
+    document.getElementById('habits-doneCount').textContent = done;
+    document.getElementById('habits-totalCount').textContent = total;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    const ring = document.getElementById('progressRing');
-    const circumference = 2 * Math.PI * 27;
-    ring.setAttribute('stroke-dasharray', circumference);
-    ring.setAttribute('stroke-dashoffset', circumference * (1 - pct / 100));
-    document.getElementById('ringText').textContent = pct + '%';
+    const ring = document.getElementById('habits-progressRing');
+    const C = 2 * Math.PI * 25;
+    ring.setAttribute('stroke-dasharray', C);
+    ring.setAttribute('stroke-dashoffset', C * (1 - pct / 100));
+    document.getElementById('habits-ringText').textContent = pct + '%';
   }
 
   function renderBinaryCard(habit, dayData, streaks, complete) {
     const el = document.createElement('div');
     const isRunning = !!timers[habit.id];
     el.className = 'habit' + (complete ? ' done' : '') + (isRunning ? ' timing' : '');
-
     const btn = document.createElement('button');
     btn.className = 'check';
     btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"></polyline></svg>';
     btn.onclick = () => {
       const d = getDay(todayKey());
-      // For timer habits, if there's tracked time, don't allow untoggling via circle
-      if (habit.timer && (d[habit.id + '_ms'] || 0) > 0) {
-        d[habit.id] = !d[habit.id];
-      } else {
-        d[habit.id] = !d[habit.id];
-      }
+      d[habit.id] = !d[habit.id];
       saveData();
+      // v2.0: explain why a timer habit stays complete after unchecking
+      if (habit.timer && !d[habit.id] && ((d[habit.id + '_ms'] || 0) > 0 || timers[habit.id])) {
+        showToast('Stays complete — time is logged today');
+      }
       renderToday();
     };
-
     const body = document.createElement('div');
     body.className = 'habit-body';
     const name = document.createElement('div');
@@ -1172,628 +1679,1413 @@
     name.textContent = habit.icon + '  ' + habit.name;
     const meta = document.createElement('div');
     meta.className = 'habit-meta';
-
     let metaHTML = `<span class="flame">🔥 ${streaks.current}</span><span class="streak-label">current</span><span>·</span><span>best ${streaks.longest}</span>`;
-
     if (habit.timer) {
       const todayMs = getTodayMs(habit.id);
-      if (todayMs > 0) {
-        metaHTML += `<span>·</span><span class="time-today" data-timer-display="${habit.id}">${formatDuration(todayMs)}</span>`;
-      }
+      if (todayMs > 0) metaHTML += `<span>·</span><span class="time-today" data-timer-display="${escapeHtml(habit.id)}">${formatDuration(todayMs)}</span>`;
     }
     meta.innerHTML = metaHTML;
-
     body.appendChild(name);
     body.appendChild(meta);
     el.appendChild(btn);
     el.appendChild(body);
-
     if (habit.timer) {
-      const timerBtn = document.createElement('button');
-      timerBtn.className = 'timer-btn' + (isRunning ? ' running' : '');
-      if (isRunning) {
-        timerBtn.innerHTML = '<span class="timer-dot"></span> Stop';
-      } else {
-        timerBtn.innerHTML = `<svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"></polygon></svg> Start`;
-      }
-      timerBtn.onclick = (e) => {
-        e.stopPropagation();
-        toggleTimer(habit.id);
-      };
-      el.appendChild(timerBtn);
+      const tBtn = document.createElement('button');
+      tBtn.className = 'timer-btn' + (isRunning ? ' running' : '');
+      tBtn.innerHTML = isRunning ? '<span class="timer-dot"></span> Stop' : '<svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"></polygon></svg> Start';
+      tBtn.onclick = (e) => { e.stopPropagation(); toggleTimer(habit.id); };
+      el.appendChild(tBtn);
     }
-
     return el;
-  }
-
-  // ============ TIMER LOGIC ============
-  function toggleTimer(habitId) {
-    if (timers[habitId]) {
-      // Stop: add elapsed to today's total
-      const elapsed = Date.now() - timers[habitId];
-      const d = getDay(todayKey());
-      d[habitId + '_ms'] = (d[habitId + '_ms'] || 0) + elapsed;
-      delete timers[habitId];
-      saveTimers();
-      saveData();
-      stopTick();
-      renderToday();
-    } else {
-      // Start
-      timers[habitId] = Date.now();
-      saveTimers();
-      startTick();
-      renderToday();
-    }
-  }
-
-  function startTick() {
-    if (tickInterval) return;
-    tickInterval = setInterval(updateTimerDisplays, 1000);
-  }
-  function stopTick() {
-    if (Object.keys(timers).length === 0 && tickInterval) {
-      clearInterval(tickInterval);
-      tickInterval = null;
-    }
-  }
-  function updateTimerDisplays() {
-    // Update inline displays without full re-render
-    Object.keys(timers).forEach(habitId => {
-      const ms = getTodayMs(habitId);
-      const el = document.querySelector(`[data-timer-display="${habitId}"]`);
-      if (el) {
-        el.textContent = formatDuration(ms);
-      } else {
-        // Time display not yet shown (just started) — do a full render once
-        renderToday();
-      }
-    });
   }
 
   function renderWaterCard(habit, dayData, streaks) {
     const amount = dayData[habit.id] || 0;
     const pct = Math.min(100, (amount / habit.goal) * 100);
-
     const card = document.createElement('div');
     card.className = 'water';
-
     card.innerHTML = `
       <div class="water-head">
-        <div class="water-title">${habit.icon} ${habit.name}</div>
-        <div class="water-amount"><span id="waterAmt">${amount}</span><span class="total"> / ${habit.goal} ml</span></div>
+        <div class="water-title">${escapeHtml(habit.icon)} ${escapeHtml(habit.name)}</div>
+        <div class="water-amount"><span>${amount}</span><span class="total"> / ${habit.goal} ${escapeHtml(habit.unit || 'ml')}</span></div>
       </div>
       <div class="water-bar"><div class="water-fill" style="width:${pct}%"></div></div>
       <div class="water-controls">
-        <button class="water-btn minus" id="waterMinus">− 400ml</button>
-        <button class="water-btn" id="waterPlus">+ 400ml</button>
-        <button class="water-btn minus" id="waterReset">Reset</button>
+        <button class="water-btn minus">− ${habit.step}${escapeHtml(habit.unit || 'ml')}</button>
+        <button class="water-btn plus">+ ${habit.step}${escapeHtml(habit.unit || 'ml')}</button>
+        <button class="water-btn minus reset-btn">Reset</button>
       </div>
       <div class="water-meta">🔥 ${streaks.current} day streak · best ${streaks.longest}</div>
     `;
-
-    card.querySelector('#waterPlus').onclick = () => {
+    card.querySelector('.plus').onclick = () => {
       const d = getDay(todayKey());
       d[habit.id] = (d[habit.id] || 0) + habit.step;
-      saveData();
-      renderToday();
+      saveData(); renderToday();
     };
-    card.querySelector('#waterMinus').onclick = () => {
+    card.querySelector('.minus:not(.reset-btn)').onclick = () => {
       const d = getDay(todayKey());
       d[habit.id] = Math.max(0, (d[habit.id] || 0) - habit.step);
-      saveData();
-      renderToday();
+      saveData(); renderToday();
     };
-    card.querySelector('#waterReset').onclick = () => {
+    card.querySelector('.reset-btn').onclick = () => {
       const d = getDay(todayKey());
       d[habit.id] = 0;
-      saveData();
-      renderToday();
+      saveData(); renderToday();
     };
-
     return card;
   }
 
-  // ============ RENDER: CALENDAR ============
+  function toggleTimer(habitId) {
+    if (timers[habitId]) {
+      const elapsed = Date.now() - timers[habitId];
+      // v2.0: guard against a timer accidentally left running for hours/days
+      if (elapsed > 6 * 3600000) {
+        const keep = confirm(`This timer has been running for ${formatDuration(elapsed)}.\n\nOK = log it all to today\nCancel = discard it (nothing logged)`);
+        if (!keep) {
+          delete timers[habitId];
+          saveTimers(); stopTick(); renderToday();
+          showToast('Timer discarded');
+          return;
+        }
+      }
+      const d = getDay(todayKey());
+      d[habitId + '_ms'] = (d[habitId + '_ms'] || 0) + elapsed;
+      delete timers[habitId];
+      saveTimers(); saveData();
+      stopTick(); renderToday();
+    } else {
+      timers[habitId] = Date.now();
+      saveTimers(); startTick(); renderToday();
+    }
+  }
+  function startTick() { if (tickInterval) return; tickInterval = setInterval(updateTimerDisplays, 1000); }
+  function stopTick() { if (Object.keys(timers).length === 0 && tickInterval) { clearInterval(tickInterval); tickInterval = null; } }
+  function updateTimerDisplays() {
+    Object.keys(timers).forEach(habitId => {
+      const ms = getTodayMs(habitId);
+      const el = document.querySelector(`[data-timer-display="${habitId}"]`);
+      if (el) el.textContent = formatDuration(ms);
+      else if (currentMode === 'habits' && currentTab === 'today') renderToday();
+    });
+  }
+
   function renderCalendar() {
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    document.getElementById('calMonth').textContent = months[calDate.getMonth()];
-    document.getElementById('calYear').textContent = calDate.getFullYear();
-
+    document.getElementById('habits-calMonth').textContent = months[calDate.getMonth()];
+    document.getElementById('habits-calYear').textContent = calDate.getFullYear();
     const habit = HABITS.find(h => h.id === selectedHabit);
-    const year = calDate.getFullYear();
-    const month = calDate.getMonth();
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    // Week starts Mon
-    let startOffset = (first.getDay() + 6) % 7;
+    if (!habit) return;
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    const first = new Date(year, month, 1), last = new Date(year, month + 1, 0);
+    const startOffset = (first.getDay() + 6) % 7;
     const todayStr = todayKey();
     const todayDate = new Date();
-
-    const days = document.getElementById('calDays');
+    const days = document.getElementById('habits-calDays');
     days.innerHTML = '';
-
     for (let i = 0; i < startOffset; i++) {
       const empty = document.createElement('div');
-      empty.className = 'day empty';
-      days.appendChild(empty);
+      empty.className = 'day empty'; days.appendChild(empty);
     }
-
     for (let d = 1; d <= last.getDate(); d++) {
       const dt = new Date(year, month, d);
       const key = dateKey(dt);
       const el = document.createElement('div');
       el.className = 'day';
       el.textContent = d;
-
       const dayData = data[key];
-      if (dt > todayDate) {
-        el.classList.add('future');
-      } else if (dayData) {
-        if (isComplete(dayData, habit)) el.classList.add('done');
+      if (dt > todayDate) el.classList.add('future');
+      else if (dayData) {
+        if (isComplete(dayData, habit, key)) el.classList.add('done');
         else if (hasAny(dayData, habit)) el.classList.add('partial');
       }
       if (key === todayStr) el.classList.add('today');
-
       days.appendChild(el);
     }
   }
-
-  function renderHabitPicker() {
-    const picker = document.getElementById('habitPicker');
+  function renderPicker() {
+    const picker = document.getElementById('habits-picker');
     picker.innerHTML = '';
     const vis = visibleHabits();
-    // If selectedHabit was removed/hidden, pick first visible
-    if (!vis.find(h => h.id === selectedHabit)) {
-      selectedHabit = vis[0] ? vis[0].id : null;
-    }
+    if (!vis.find(h => h.id === selectedHabit)) selectedHabit = vis[0] ? vis[0].id : null;
     vis.forEach(h => {
       const chip = document.createElement('button');
-      chip.className = 'habit-chip' + (h.id === selectedHabit ? ' active' : '');
+      chip.className = 'item-chip' + (h.id === selectedHabit ? ' active' : '');
       chip.textContent = h.icon + ' ' + h.name;
-      chip.onclick = () => {
-        selectedHabit = h.id;
-        renderHabitPicker();
-        renderCalendar();
-        renderStats();
-      };
+      chip.onclick = () => { selectedHabit = h.id; renderPicker(); renderCalendar(); renderStats(); };
       picker.appendChild(chip);
     });
   }
-
-  function renderStats() {
-    const grid = document.getElementById('statsGrid');
-    grid.innerHTML = '';
-    visibleHabits().forEach(h => {
-      const s = calcStreaks(h.id);
-      const monthDone = countMonth(h);
-      const card = document.createElement('div');
-      card.className = 'stat-card';
-      let extraRow = '';
-      if (h.timer) {
-        const monthMs = countMonthMs(h);
-        extraRow = `<div class="stat-row"><span>Time this month</span><span class="v">${formatMinutes(monthMs)}</span></div>`;
-      }
-      card.innerHTML = `
-        <div class="stat-name">${h.icon} ${escapeHtml(h.name)}</div>
-        <div class="stat-row"><span>Current streak</span><span class="v">${s.current}</span></div>
-        <div class="stat-row"><span>Longest streak</span><span class="v">${s.longest}</span></div>
-        <div class="stat-row"><span>This month</span><span class="v">${monthDone}</span></div>
-        ${extraRow}
-      `;
-      grid.appendChild(card);
-    });
-  }
-
   function countMonth(habit) {
-    const year = calDate.getFullYear();
-    const month = calDate.getMonth();
+    const year = calDate.getFullYear(), month = calDate.getMonth();
     let count = 0;
     const last = new Date(year, month + 1, 0).getDate();
     for (let d = 1; d <= last; d++) {
       const key = dateKey(new Date(year, month, d));
-      if (data[key] && isComplete(data[key], habit)) count++;
+      if (data[key] && isComplete(data[key], habit, key)) count++;
     }
     return count;
   }
-
   function countMonthMs(habit) {
-    const year = calDate.getFullYear();
-    const month = calDate.getMonth();
+    const year = calDate.getFullYear(), month = calDate.getMonth();
     let total = 0;
     const last = new Date(year, month + 1, 0).getDate();
     for (let d = 1; d <= last; d++) {
       const key = dateKey(new Date(year, month, d));
       if (data[key]) total += (data[key][habit.id + '_ms'] || 0);
     }
-    // include currently running time if this month
     if (timers[habit.id]) {
       const now = new Date();
-      if (now.getFullYear() === year && now.getMonth() === month) {
-        total += Date.now() - timers[habit.id];
-      }
+      if (now.getFullYear() === year && now.getMonth() === month) total += Date.now() - timers[habit.id];
     }
     return total;
   }
-
   function formatMinutes(ms) {
-    if (!ms || ms < 60000) {
-      const m = Math.floor((ms || 0) / 60000);
-      return m + ' min';
-    }
+    if (!ms || ms < 60000) return Math.floor((ms || 0) / 60000) + ' min';
     const totalMin = Math.floor(ms / 60000);
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
     if (h === 0) return m + ' min';
     if (m === 0) return h + ' hr';
     return `${h}h ${m}m`;
   }
+  function renderStats() {
+    const grid = document.getElementById('habits-statsGrid');
+    grid.innerHTML = '';
+    visibleHabits().forEach(h => {
+      const s = calcStreaks(h.id);
+      const monthDone = countMonth(h);
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      let extra = '';
+      if (h.timer) extra = `<div class="stat-row"><span>Time this month</span><span class="v">${formatMinutes(countMonthMs(h))}</span></div>`;
+      card.innerHTML = `
+        <div class="stat-name">${escapeHtml(h.icon)} ${escapeHtml(h.name)}</div>
+        <div class="stat-row"><span>Current streak</span><span class="v">${s.current}</span></div>
+        <div class="stat-row"><span>Longest streak</span><span class="v">${s.longest}</span></div>
+        <div class="stat-row"><span>This month</span><span class="v">${monthDone}</span></div>
+        ${extra}
+      `;
+      grid.appendChild(card);
+    });
+  }
 
-  // ============ SETTINGS: HABIT MANAGER ============
-  function renderHabitManager() {
-    const box = document.getElementById('habitManager');
+  // Manager
+  function renderManager() {
+    const box = document.getElementById('habits-manager');
     box.innerHTML = '';
     HABITS.forEach((h, idx) => {
       const row = document.createElement('div');
-      row.className = 'manage-row' + (h.hidden ? ' hidden-habit' : '');
-      row.dataset.idx = idx;
-
-      const handle = document.createElement('span');
-      handle.className = 'manage-handle';
-      handle.textContent = '⋮⋮';
-      handle.title = 'Drag to reorder';
-
+      row.className = 'manage-row' + (h.hidden ? ' hidden-item' : '');
       const name = document.createElement('div');
       name.className = 'manage-name';
       let badges = '';
       if (h.timer) badges += '<span class="badge">timer</span>';
       if (h.type === 'quantity') badges += '<span class="badge">water</span>';
       if (h.hidden) badges += '<span class="badge hidden">hidden</span>';
-      name.innerHTML = `${h.icon} ${escapeHtml(h.name)}${badges}`;
-
-      const upBtn = makeIconBtn('↑', 'Move up', () => moveHabit(idx, -1));
-      const downBtn = makeIconBtn('↓', 'Move down', () => moveHabit(idx, 1));
-      const editBtn = makeIconBtn('✎', 'Edit', () => openHabitModal(h.id));
-      const hideBtn = makeIconBtn(h.hidden ? '◎' : '●', h.hidden ? 'Show' : 'Hide', () => toggleHide(h.id));
-      const delBtn = makeIconBtn('🗑', 'Delete', () => deleteHabit(h.id));
-      delBtn.classList.add('danger');
-
-      row.appendChild(handle);
+      name.innerHTML = `${escapeHtml(h.icon)} ${escapeHtml(h.name)}${badges}`;
       row.appendChild(name);
-      row.appendChild(upBtn);
-      row.appendChild(downBtn);
-      row.appendChild(editBtn);
-      row.appendChild(hideBtn);
-      row.appendChild(delBtn);
+      row.appendChild(makeIconBtn('↑', () => moveItem(idx, -1)));
+      row.appendChild(makeIconBtn('↓', () => moveItem(idx, 1)));
+      row.appendChild(makeIconBtn('✎', () => openModal(h.id)));
+      row.appendChild(makeIconBtn(h.hidden ? '◎' : '●', () => toggleHide(h.id)));
+      const del = makeIconBtn('🗑', () => deleteItem(h.id));
+      del.classList.add('danger');
+      row.appendChild(del);
       box.appendChild(row);
     });
   }
-  function makeIconBtn(label, title, onClick) {
+  function makeIconBtn(label, onClick) {
     const b = document.createElement('button');
     b.className = 'icon-btn';
     b.textContent = label;
-    b.title = title;
     b.onclick = onClick;
     return b;
   }
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function moveItem(idx, dir) {
+    const ni = idx + dir;
+    if (ni < 0 || ni >= HABITS.length) return;
+    [HABITS[idx], HABITS[ni]] = [HABITS[ni], HABITS[idx]];
+    saveItems(); renderManager(); renderToday(); renderPicker();
   }
-  function moveHabit(idx, dir) {
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= HABITS.length) return;
-    [HABITS[idx], HABITS[newIdx]] = [HABITS[newIdx], HABITS[idx]];
-    saveHabits();
-    renderHabitManager();
-    renderToday();
-    renderHabitPicker();
-  }
-  function toggleHide(habitId) {
-    const h = HABITS.find(x => x.id === habitId);
+  function toggleHide(id) {
+    const h = HABITS.find(x => x.id === id);
     if (!h) return;
     h.hidden = !h.hidden;
-    saveHabits();
-    renderHabitManager();
-    renderToday();
-    renderHabitPicker();
-    renderStats();
+    saveItems(); renderManager(); renderToday(); renderPicker(); renderStats();
     showToast(h.hidden ? 'Habit hidden (data kept)' : 'Habit shown again');
   }
-  function deleteHabit(habitId) {
-    const h = HABITS.find(x => x.id === habitId);
+  function deleteItem(id) {
+    const h = HABITS.find(x => x.id === id);
     if (!h) return;
-    const hasHistory = Object.values(data).some(day =>
-      day[habitId] || (day[habitId + '_ms'] && day[habitId + '_ms'] > 0)
-    );
+    const hasHistory = Object.values(data).some(d => d[id] || (d[id + '_ms'] && d[id + '_ms'] > 0));
     let msg = `Delete "${h.name}"?`;
-    if (hasHistory) {
-      msg += '\n\nThis habit has tracking history. Deleting will remove it from lists AND erase its tracking history permanently.\n\nTip: Use "hide" instead to keep history.';
-    }
+    if (hasHistory) msg += '\n\nThis habit has tracking history. Deleting will erase it permanently. Use "hide" to keep history.';
     if (!confirm(msg)) return;
-
-    HABITS = HABITS.filter(x => x.id !== habitId);
-    // Also remove its data from all day records
-    Object.keys(data).forEach(dayKey => {
-      delete data[dayKey][habitId];
-      delete data[dayKey][habitId + '_ms'];
-    });
-    delete timers[habitId];
-    saveHabits();
-    saveData();
-    saveTimers();
-    if (selectedHabit === habitId) selectedHabit = HABITS[0] ? HABITS[0].id : null;
-    renderHabitManager();
-    renderToday();
-    renderHabitPicker();
-    renderCalendar();
-    renderStats();
+    HABITS = HABITS.filter(x => x.id !== id);
+    Object.keys(data).forEach(dk => { delete data[dk][id]; delete data[dk][id + '_ms']; });
+    delete timers[id];
+    saveItems(); saveData(); saveTimers();
+    if (selectedHabit === id) selectedHabit = HABITS[0] ? HABITS[0].id : null;
+    Plan.onSourceDeleted('habits', id);
+    renderManager(); renderToday(); renderPicker(); renderCalendar(); renderStats();
     showToast('Habit deleted');
   }
-
-  // ============ SETTINGS: HABIT MODAL ============
-  function openHabitModal(habitId) {
-    editingHabitId = habitId || null;
-    const modal = document.getElementById('habitModal');
-    const title = document.getElementById('modalTitle');
-    const iconInput = document.getElementById('habitIcon');
-    const nameInput = document.getElementById('habitName');
-    const timerInput = document.getElementById('habitTimer');
-
-    if (habitId) {
-      const h = HABITS.find(x => x.id === habitId);
-      title.textContent = 'Edit habit';
-      iconInput.value = h.icon || '';
-      nameInput.value = h.name || '';
-      timerInput.checked = !!h.timer;
-      // Don't allow changing water tracker into a regular one — disable timer toggle
-      timerInput.disabled = h.type === 'quantity';
+  function openModal(id) {
+    editingId = id || null;
+    const m = document.getElementById('habitModal');
+    document.getElementById('habitModalTitle').textContent = id ? 'Edit habit' : 'Add habit';
+    if (id) {
+      const h = HABITS.find(x => x.id === id);
+      document.getElementById('habitIcon').value = h.icon || '';
+      document.getElementById('habitName').value = h.name || '';
+      document.getElementById('habitTimer').checked = !!h.timer;
+      document.getElementById('habitTimer').disabled = h.type === 'quantity';
     } else {
-      title.textContent = 'Add habit';
-      iconInput.value = '';
-      nameInput.value = '';
-      timerInput.checked = false;
-      timerInput.disabled = false;
+      document.getElementById('habitIcon').value = '';
+      document.getElementById('habitName').value = '';
+      document.getElementById('habitTimer').checked = false;
+      document.getElementById('habitTimer').disabled = false;
     }
-    modal.style.display = 'flex';
-    setTimeout(() => nameInput.focus(), 50);
+    m.style.display = 'flex';
+    setTimeout(() => document.getElementById('habitName').focus(), 50);
   }
-  function closeHabitModal() {
-    document.getElementById('habitModal').style.display = 'none';
-    editingHabitId = null;
-  }
-  function saveHabitFromModal() {
+  function closeModal() { document.getElementById('habitModal').style.display = 'none'; editingId = null; }
+  function saveFromModal() {
     const icon = document.getElementById('habitIcon').value.trim() || '•';
     const name = document.getElementById('habitName').value.trim();
     const timer = document.getElementById('habitTimer').checked;
-    if (!name) {
-      showToast('Please enter a name');
-      return;
-    }
-    if (editingHabitId) {
-      const h = HABITS.find(x => x.id === editingHabitId);
-      h.icon = icon;
-      h.name = name;
+    if (!name) { showToast('Please enter a name'); return; }
+    if (editingId) {
+      const h = HABITS.find(x => x.id === editingId);
+      h.icon = icon; h.name = name;
       if (h.type !== 'quantity') h.timer = timer;
       showToast('Habit updated');
     } else {
-      const newHabit = {
-        id: 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-        name, icon,
-      };
-      if (timer) newHabit.timer = true;
-      HABITS.push(newHabit);
+      const nh = { id: 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name, icon };
+      if (timer) nh.timer = true;
+      HABITS.push(nh);
       showToast('Habit added');
     }
-    saveHabits();
-    closeHabitModal();
-    renderHabitManager();
-    renderToday();
-    renderHabitPicker();
-    renderStats();
+    saveItems(); closeModal();
+    renderManager(); renderToday(); renderPicker(); renderStats();
   }
 
-  // ============ SETTINGS: EXPORT / IMPORT ============
+  // Backup
   function exportBackup() {
-    const payload = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      habits: HABITS,
-      data: data,
-    };
+    const payload = { version: 1, type: 'habits', exportedAt: new Date().toISOString(), habits: HABITS, data };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const date = new Date().toISOString().slice(0, 10);
-    a.download = `habits-backup-${date}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.download = `habits-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
-    renderLastBackup();
-    renderBackupBanner();
+    localStorage.setItem('habits_lastBackup_v1', new Date().toISOString());
+    renderLastBackup(); renderBackupBanner();
     showToast('Backup downloaded');
   }
   function importBackup(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    const r = new FileReader();
+    r.onload = e => {
       try {
-        const payload = JSON.parse(e.target.result);
-        if (!payload.habits || !payload.data) throw new Error('Invalid file');
-        if (!confirm('Restore from backup? This will replace your current habits and tracking data.')) return;
-        HABITS = payload.habits;
-        data = payload.data;
+        const p = JSON.parse(e.target.result);
+        // Accept either combined-app format or old single-app format
+        const items = p.habits || p.items;
+        if (!items || !p.data) throw new Error('Invalid file');
+        if (!confirm('Restore habit data from backup? This will replace your current habits and tracking data.')) return;
+        HABITS = items;
+        data = p.data;
         timers = {};
-        saveHabits();
-        saveData();
-        saveTimers();
-        stopTick();
+        saveItems(); saveData(); saveTimers(); stopTick();
         selectedHabit = HABITS[0] ? HABITS[0].id : null;
-        renderHabitManager();
-        renderToday();
-        renderHabitPicker();
-        renderCalendar();
-        renderStats();
+        renderManager(); renderToday(); renderPicker(); renderCalendar(); renderStats();
         showToast('Backup restored');
-      } catch (err) {
-        alert('Could not import file. Make sure it is a valid habits backup.\n\n' + err.message);
-      }
+      } catch (err) { alert('Could not import: ' + err.message); }
     };
-    reader.readAsText(file);
+    r.readAsText(file);
   }
   function renderLastBackup() {
-    const el = document.getElementById('lastBackup');
-    const last = localStorage.getItem(LAST_BACKUP_KEY);
+    const el = document.getElementById('habits-lastBackup');
+    const last = localStorage.getItem('habits_lastBackup_v1');
     if (last) {
       const d = new Date(last);
       el.textContent = `Last backup: ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
-    } else {
-      el.textContent = 'No backup created yet.';
-    }
+    } else el.textContent = 'No backup created yet.';
   }
   function resetAll() {
-    if (!confirm('Wipe ALL habits and tracking data? This cannot be undone. Consider exporting a backup first.')) return;
-    if (!confirm('Really sure? All your history will be gone.')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(TIMER_KEY);
-    localStorage.removeItem(HABITS_KEY);
-    localStorage.removeItem(LAST_BACKUP_KEY);
-    localStorage.removeItem(BANNER_DISMISS_KEY);
+    if (!confirm('Wipe ALL personal habit data? Cannot be undone. Export first.')) return;
+    if (!confirm('Really sure?')) return;
+    ['habits_data_v1','habits_items_v1','habits_timers_v1','habits_lastBackup_v1','habits_bannerDismissed_v1'].forEach(k => localStorage.removeItem(k));
     location.reload();
   }
-
-  // ============ BACKUP REMINDER BANNER ============
   function renderBackupBanner() {
-    const slot = document.getElementById('backupBannerSlot');
+    const slot = document.getElementById('habits-backupBanner');
     slot.innerHTML = '';
-    const last = localStorage.getItem(LAST_BACKUP_KEY);
-    const dismissed = localStorage.getItem(BANNER_DISMISS_KEY);
-    // Only show if there's meaningful data (at least 3 days of tracking)
-    const dayCount = Object.keys(data).length;
-    if (dayCount < 3) return;
-
+    const last = localStorage.getItem('habits_lastBackup_v1');
+    const dismissed = localStorage.getItem('habits_bannerDismissed_v1');
+    if (Object.keys(data).length < 3) return;
     const now = Date.now();
-    const dismissedRecently = dismissed && (now - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000;
-    if (dismissedRecently) return;
+    if (dismissed && (now - parseInt(dismissed)) < 7*24*60*60*1000) return;
     const lastMs = last ? new Date(last).getTime() : 0;
-    const daysSinceBackup = (now - lastMs) / (24 * 60 * 60 * 1000);
-    if (last && daysSinceBackup < 7) return;
-
+    if (last && (now - lastMs) / 86400000 < 7) return;
     const banner = document.createElement('div');
     banner.className = 'backup-banner';
     const msg = last
-      ? `It's been over a week since your last backup. <button class="banner-action" id="bannerBackupBtn">Back up now</button>`
-      : `You have ${dayCount} days of history. <button class="banner-action" id="bannerBackupBtn">Back up your data</button> to protect it.`;
-    banner.innerHTML = `
-      <span>💾</span>
-      <span class="msg">${msg}</span>
-      <button class="banner-close" id="bannerCloseBtn" title="Dismiss">×</button>
-    `;
+      ? `It's been over a week since your last habits backup. <button class="banner-action" id="habits-bannerBackup">Back up now</button>`
+      : `You have ${Object.keys(data).length} days of habit history. <button class="banner-action" id="habits-bannerBackup">Back up your data</button>.`;
+    banner.innerHTML = `<span>💾</span><span class="msg">${msg}</span><button class="banner-close" id="habits-bannerClose" title="Dismiss">×</button>`;
     slot.appendChild(banner);
-    document.getElementById('bannerBackupBtn').onclick = () => exportBackup();
-    document.getElementById('bannerCloseBtn').onclick = () => {
-      localStorage.setItem(BANNER_DISMISS_KEY, Date.now().toString());
-      renderBackupBanner();
-    };
+    document.getElementById('habits-bannerBackup').onclick = exportBackup;
+    document.getElementById('habits-bannerClose').onclick = () => { localStorage.setItem('habits_bannerDismissed_v1', Date.now().toString()); renderBackupBanner(); };
   }
 
-  // ============ TOAST ============
-  let toastTimer = null;
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  function init() {
+    document.getElementById('habits-prevMonth').onclick = () => { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); renderStats(); };
+    document.getElementById('habits-nextMonth').onclick = () => { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); renderStats(); };
+    document.getElementById('habits-addBtn').onclick = () => openModal(null);
+    document.getElementById('habits-exportBtn').onclick = exportBackup;
+    document.getElementById('habits-importBtn').onclick = () => document.getElementById('habits-importFile').click();
+    document.getElementById('habits-importFile').onchange = e => { if (e.target.files[0]) importBackup(e.target.files[0]); e.target.value = ''; };
+    document.getElementById('habits-resetBtn').onclick = resetAll;
+    document.getElementById('habitModalSave').onclick = saveFromModal;
+    document.getElementById('habitModalCancel').onclick = closeModal;
+    document.getElementById('habitModal').onclick = e => { if (e.target.id === 'habitModal') closeModal(); };
+    if (Object.keys(timers).length > 0) startTick();
   }
 
-  // ============ EVENTS ============
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('view-' + tab.dataset.tab).classList.add('active');
-      if (tab.dataset.tab === 'calendar') {
-        renderCalendar();
-        renderStats();
+  return {
+    init, renderToday, renderCalendar, renderPicker, renderStats, renderManager, renderLastBackup, renderBackupBanner,
+    // exposed for the Plan tab
+    list: () => visibleHabits(),
+    completionDates,
+    getItem: (id) => HABITS.find(h => h.id === id)
+  };
+})();
+
+// ============================================================
+// HOUSEHOLD (CHORES) MODULE
+// ============================================================
+const Chores = (() => {
+  const DEFAULTS = [
+    { id: 'laundry', name: 'Laundry', icon: '🧺', counted: true, unit: 'load' },
+    { id: 'bathroom', name: 'Clean bathroom', icon: '🛁' },
+    { id: 'kitchen', name: 'Clean kitchen', icon: '🍽️' },
+    { id: 'sheets', name: 'Change sheets', icon: '🛏️' },
+    { id: 'mopping', name: 'Mop floors', icon: '🧽' },
+    { id: 'shower_hannah', name: 'Shower — Hannah', icon: '🚿' },
+    { id: 'shower_jessica', name: 'Shower — Jessica', icon: '🚿' },
+    { id: 'costco', name: 'Costco', icon: '🛒' },
+  ];
+  function migrate() {
+    const oldData = localStorage.getItem('choreTrackerData_v1');
+    if (oldData && !localStorage.getItem('chores_data_v1')) localStorage.setItem('chores_data_v1', oldData);
+    const oldChores = localStorage.getItem('choreTrackerChores_v1');
+    if (oldChores && !localStorage.getItem('chores_items_v1')) localStorage.setItem('chores_items_v1', oldChores);
+    const oldBackup = localStorage.getItem('choreTrackerLastBackup_v1');
+    if (oldBackup && !localStorage.getItem('chores_lastBackup_v1')) localStorage.setItem('chores_lastBackup_v1', oldBackup);
+    const oldDismiss = localStorage.getItem('choreTrackerBannerDismissed_v1');
+    if (oldDismiss && !localStorage.getItem('chores_bannerDismissed_v1')) localStorage.setItem('chores_bannerDismissed_v1', oldDismiss);
+  }
+  migrate();
+
+  let data = (() => { try { return JSON.parse(localStorage.getItem('chores_data_v1')) || {}; } catch { return {}; } })();
+  let CHORES = (() => {
+    try { const raw = localStorage.getItem('chores_items_v1'); if (raw) return JSON.parse(raw); } catch {}
+    localStorage.setItem('chores_items_v1', JSON.stringify(DEFAULTS));
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  })();
+  let calDate = new Date();
+  let selectedChore = 'all';
+  let selectedDay = null;
+  let editingId = null;
+  let recentlyDone = null;
+
+  function saveData() { localStorage.setItem('chores_data_v1', JSON.stringify(data)); }
+  function saveItems() { localStorage.setItem('chores_items_v1', JSON.stringify(CHORES)); }
+  function visibleChores() { return CHORES.filter(c => !c.hidden); }
+  function getChoreDates(id) { return data[id] || []; }
+  function getCountKey(id) { return id + '_counts'; }
+  function getCountForDate(id, dateStr) { return (data[getCountKey(id)] || {})[dateStr] || 0; }
+  function setCountForDate(id, dateStr, val) {
+    const ck = getCountKey(id);
+    if (!data[ck]) data[ck] = {};
+    if (val <= 0) {
+      delete data[ck][dateStr];
+      if (data[id]) {
+        data[id] = data[id].filter(d => d !== dateStr);
+        if (data[id].length === 0) delete data[id];
       }
-      if (tab.dataset.tab === 'settings') {
-        renderHabitManager();
-        renderLastBackup();
+    } else {
+      data[ck][dateStr] = val;
+      if (!data[id]) data[id] = [];
+      if (!data[id].includes(dateStr)) {
+        data[id].unshift(dateStr);
+        data[id].sort().reverse();
       }
-    };
-  });
+    }
+    saveData();
+  }
+  function lastDoneDays(id) {
+    const dates = getChoreDates(id);
+    if (dates.length === 0) return Infinity;
+    return daysBetween(dates[0], todayKey());
+  }
+  function isDoneToday(id) {
+    const dates = getChoreDates(id);
+    return dates.length > 0 && dates[0] === todayKey();
+  }
+  function relativeTime(key) {
+    const days = daysBetween(key, todayKey());
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 14) return '1 week ago';
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    if (days < 60) return '1 month ago';
+    return `${Math.floor(days / 30)} months ago`;
+  }
+  function categorize(id) {
+    const days = lastDoneDays(id);
+    if (isDoneToday(id)) return 'fresh';
+    if (days <= 1) return 'fresh';
+    if (days <= 7) return 'normal';
+    if (days <= 14) return 'overdue';
+    return 'urgent';
+  }
+  function pluralize(n, word) { return n === 1 ? word : word + 's'; }
+  function formatDayLabel(dateStr) {
+    const dt = new Date(dateStr + 'T00:00:00');
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const today = todayKey();
+    const yest = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dateKey(d); })();
+    if (dateStr === today) return 'Today';
+    if (dateStr === yest) return 'Yesterday';
+    return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]}`;
+  }
 
-  document.getElementById('prevMonth').onclick = () => {
-    calDate.setMonth(calDate.getMonth() - 1);
-    renderCalendar();
-    renderStats();
-  };
-  document.getElementById('nextMonth').onclick = () => {
-    calDate.setMonth(calDate.getMonth() + 1);
-    renderCalendar();
-    renderStats();
-  };
-
-  // Settings buttons
-  document.getElementById('addHabitBtn').onclick = () => openHabitModal(null);
-  document.getElementById('exportBtn').onclick = exportBackup;
-  document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
-  document.getElementById('importFile').onchange = (e) => {
-    if (e.target.files[0]) importBackup(e.target.files[0]);
-    e.target.value = '';
-  };
-  document.getElementById('resetBtn').onclick = resetAll;
-
-  // Modal buttons
-  document.getElementById('modalSave').onclick = saveHabitFromModal;
-  document.getElementById('modalCancel').onclick = closeHabitModal;
-  document.getElementById('habitModal').onclick = (e) => {
-    if (e.target.id === 'habitModal') closeHabitModal();
-  };
-
-  // ============ INIT ============
-  renderHeader();
-  renderToday();
-  renderHabitPicker();
-  renderCalendar();
-  renderStats();
-  renderBackupBanner();
-
-  // Resume ticking if any timer was running when page was closed
-  if (Object.keys(timers).length > 0) startTick();
-
-  // Refresh "today" at midnight if app stays open
-  function scheduleMidnightRefresh() {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 5, 0);
+  function markDone(id) {
+    const today = todayKey();
+    const c = CHORES.find(x => x.id === id);
+    if (!data[id]) data[id] = [];
+    if (data[id][0] === today) return;
+    data[id].unshift(today);
+    if (c && c.counted) {
+      const ck = getCountKey(id);
+      if (!data[ck]) data[ck] = {};
+      data[ck][today] = 1;
+    }
+    saveData();
+    recentlyDone = { choreId: id, date: today };
+    renderToday();
     setTimeout(() => {
-      // If any timers are running at midnight, stop them and commit the time to the previous day
-      Object.keys(timers).forEach(habitId => {
-        const elapsed = Date.now() - timers[habitId];
-        const d = getDay(todayKey());
-        d[habitId + '_ms'] = (d[habitId + '_ms'] || 0) + elapsed;
-        delete timers[habitId];
-      });
-      saveTimers();
-      saveData();
-      stopTick();
-      renderHeader();
-      renderToday();
-      scheduleMidnightRefresh();
-    }, midnight - now);
+      if (recentlyDone && recentlyDone.choreId === id && recentlyDone.date === today) {
+        recentlyDone = null;
+        renderRecentBanner();
+      }
+    }, 6000);
   }
-  scheduleMidnightRefresh();
+  function undoLastDone() {
+    if (!recentlyDone) return;
+    const { choreId, date } = recentlyDone;
+    if (data[choreId] && data[choreId][0] === date) {
+      data[choreId].shift();
+      if (data[choreId].length === 0) delete data[choreId];
+      const ck = getCountKey(choreId);
+      if (data[ck] && data[ck][date] !== undefined) {
+        delete data[ck][date];
+        if (Object.keys(data[ck]).length === 0) delete data[ck];
+      }
+      saveData();
+    }
+    recentlyDone = null;
+    renderToday();
+    showToast('Undone');
+  }
+  function adjustCount(id, delta) {
+    const today = todayKey();
+    const cur = getCountForDate(id, today);
+    setCountForDate(id, today, Math.max(0, cur + delta));
+    renderToday();
+  }
+  function addChoreToDate(id, dateStr) {
+    const c = CHORES.find(x => x.id === id);
+    if (!c) return;
+    if (!data[id]) data[id] = [];
+    if (!data[id].includes(dateStr)) {
+      data[id].unshift(dateStr);
+      data[id].sort().reverse();
+    }
+    if (c.counted) {
+      const ck = getCountKey(id);
+      if (!data[ck]) data[ck] = {};
+      if (!data[ck][dateStr]) data[ck][dateStr] = 1;
+    }
+    saveData();
+  }
+  function removeChoreFromDate(id, dateStr) {
+    if (data[id]) {
+      data[id] = data[id].filter(d => d !== dateStr);
+      if (data[id].length === 0) delete data[id];
+    }
+    const ck = getCountKey(id);
+    if (data[ck] && data[ck][dateStr] !== undefined) {
+      delete data[ck][dateStr];
+      if (Object.keys(data[ck]).length === 0) delete data[ck];
+    }
+    saveData();
+  }
+  function adjustCountForDate(id, dateStr, delta) {
+    const cur = getCountForDate(id, dateStr);
+    const nv = Math.max(0, cur + delta);
+    if (nv === 0) removeChoreFromDate(id, dateStr);
+    else setCountForDate(id, dateStr, nv);
+  }
 
-  // Register service worker for offline support (only works on https / github pages)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+  function renderToday() {
+    renderBackupBanner();
+    renderRecentBanner();
+    const container = document.getElementById('chores-container');
+    container.innerHTML = '';
+    const vis = visibleChores();
+    if (vis.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon-large">🧹</div><h3>No chores yet</h3><p>Add some in the Settings tab.</p></div>`;
+      return;
+    }
+    const sorted = [...vis].sort((a, b) => {
+      const order = { urgent: 0, overdue: 1, normal: 2, fresh: 3 };
+      const ca = categorize(a.id), cb = categorize(b.id);
+      if (ca !== cb) return order[ca] - order[cb];
+      return lastDoneDays(b.id) - lastDoneDays(a.id);
+    });
+    const groups = { urgent: [], overdue: [], normal: [], fresh: [] };
+    sorted.forEach(c => groups[categorize(c.id)].push(c));
+    const labels = { urgent: 'Needs attention', overdue: 'Coming due', normal: 'On track', fresh: 'Recently done' };
+    Object.keys(groups).forEach(key => {
+      if (groups[key].length === 0) return;
+      const heading = document.createElement('div');
+      heading.className = 'section-label';
+      heading.textContent = labels[key];
+      container.appendChild(heading);
+      const list = document.createElement('div');
+      list.className = 'chores';
+      groups[key].forEach(c => list.appendChild(renderChoreCard(c, key)));
+      container.appendChild(list);
     });
   }
+  function renderChoreCard(chore, status) {
+    const el = document.createElement('div');
+    el.className = 'chore ' + status;
+    const icon = document.createElement('div');
+    icon.className = 'chore-icon';
+    icon.textContent = chore.icon;
+    const body = document.createElement('div');
+    body.className = 'chore-body';
+    const name = document.createElement('div');
+    name.className = 'chore-name';
+    name.textContent = chore.name;
+    const meta = document.createElement('div');
+    meta.className = 'chore-meta';
+    const dates = getChoreDates(chore.id);
+    if (dates.length === 0) {
+      meta.innerHTML = '<span class="never">Never done</span>';
+    } else {
+      const rel = relativeTime(dates[0]);
+      let countSuffix = '';
+      if (chore.counted) {
+        const c = getCountForDate(chore.id, dates[0]);
+        if (c > 0) countSuffix = ` · ${c} ${pluralize(c, chore.unit || 'time')}`;
+      }
+      let tag = '';
+      if (status === 'urgent') tag = ' · <span class="urgent-tag">overdue</span>';
+      else if (status === 'fresh') tag = ' · <span class="fresh-tag">fresh</span>';
+      meta.innerHTML = `Last done: ${escapeHtml(rel)}${escapeHtml(countSuffix)}${tag}`;
+    }
+    body.appendChild(name); body.appendChild(meta);
+    el.appendChild(icon); el.appendChild(body);
+    if (chore.counted && isDoneToday(chore.id)) {
+      const stp = document.createElement('div');
+      stp.className = 'count-stepper';
+      const minus = document.createElement('button');
+      minus.className = 'count-step-btn';
+      minus.textContent = '−';
+      minus.onclick = () => adjustCount(chore.id, -1);
+      const valBox = document.createElement('div');
+      valBox.className = 'count-value';
+      const cnt = getCountForDate(chore.id, todayKey());
+      valBox.innerHTML = `<span class="num">${cnt}</span><span class="unit">${escapeHtml(pluralize(cnt, chore.unit || 'time'))}</span>`;
+      const plus = document.createElement('button');
+      plus.className = 'count-step-btn';
+      plus.textContent = '+';
+      plus.onclick = () => adjustCount(chore.id, 1);
+      stp.appendChild(minus); stp.appendChild(valBox); stp.appendChild(plus);
+      el.appendChild(stp);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'done-btn';
+      btn.textContent = isDoneToday(chore.id) ? '✓ Done' : 'Mark done';
+      if (isDoneToday(chore.id)) {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'default';
+      } else {
+        btn.onclick = () => markDone(chore.id);
+      }
+      el.appendChild(btn);
+    }
+    return el;
+  }
+  function renderRecentBanner() {
+    const slot = document.getElementById('chores-recentBanner');
+    slot.innerHTML = '';
+    if (!recentlyDone) return;
+    const c = CHORES.find(x => x.id === recentlyDone.choreId);
+    if (!c) return;
+    const banner = document.createElement('div');
+    banner.className = 'recent-banner';
+    banner.innerHTML = `<span>${escapeHtml(c.icon)}</span><span>${escapeHtml(c.name)} marked done.</span><button class="undo-btn" id="chores-undoBtn">Undo</button>`;
+    slot.appendChild(banner);
+    document.getElementById('chores-undoBtn').onclick = undoLastDone;
+  }
+
+  function renderCalendar() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('chores-calMonth').textContent = months[calDate.getMonth()];
+    document.getElementById('chores-calYear').textContent = calDate.getFullYear();
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    const first = new Date(year, month, 1), last = new Date(year, month + 1, 0);
+    const startOffset = (first.getDay() + 6) % 7;
+    const todayStr = todayKey();
+    const todayDate = new Date();
+    const days = document.getElementById('chores-calDays');
+    days.innerHTML = '';
+    for (let i = 0; i < startOffset; i++) {
+      const e = document.createElement('div');
+      e.className = 'day empty'; days.appendChild(e);
+    }
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dt = new Date(year, month, d);
+      const key = dateKey(dt);
+      const el = document.createElement('div');
+      el.className = 'day';
+      el.textContent = d;
+      if (dt > todayDate) el.classList.add('future');
+      else {
+        if (selectedChore === 'all') {
+          let count = 0;
+          visibleChores().forEach(c => { if (getChoreDates(c.id).includes(key)) count++; });
+          if (count > 0) {
+            el.classList.add('done');
+            if (count > 1) {
+              const dot = document.createElement('span');
+              dot.className = 'count-dot';
+              dot.textContent = count;
+              el.appendChild(dot);
+            }
+          }
+        } else {
+          if (getChoreDates(selectedChore).includes(key)) el.classList.add('done');
+        }
+        el.onclick = () => selectDay(key);
+      }
+      if (key === todayStr) el.classList.add('today');
+      if (key === selectedDay) el.style.boxShadow = '0 0 0 2px var(--accent)';
+      days.appendChild(el);
+    }
+    document.getElementById('chores-legendDone').textContent = selectedChore === 'all' ? 'Any chore done' : 'Done';
+  }
+  function selectDay(key) {
+    selectedDay = (selectedDay === key) ? null : key;
+    renderCalendar();
+    renderDayDetail();
+  }
+  function renderDayDetail() {
+    const slot = document.getElementById('chores-dayDetail');
+    slot.innerHTML = '';
+    if (!selectedDay) return;
+    const detail = document.createElement('div');
+    detail.className = 'day-detail';
+    const choresOnDay = visibleChores().filter(c => getChoreDates(c.id).includes(selectedDay));
+    const choresNotOnDay = visibleChores().filter(c => !getChoreDates(c.id).includes(selectedDay));
+    detail.innerHTML = `<div class="day-detail-title"><em>${escapeHtml(formatDayLabel(selectedDay))}</em></div>`;
+    const list = document.createElement('div');
+    list.className = 'day-detail-list';
+    if (choresOnDay.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'day-detail-empty';
+      empty.textContent = 'No chores logged this day yet.';
+      list.appendChild(empty);
+    } else {
+      choresOnDay.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'day-detail-row';
+        const content = document.createElement('div');
+        content.className = 'day-row-content';
+        content.innerHTML = `<span class="icon-mini">${escapeHtml(c.icon)}</span><span>${escapeHtml(c.name)}</span>`;
+        row.appendChild(content);
+        if (c.counted) {
+          const cnt = getCountForDate(c.id, selectedDay);
+          const stp = document.createElement('div');
+          stp.className = 'row-count-stepper';
+          const m = document.createElement('button');
+          m.className = 'row-count-btn'; m.textContent = '−';
+          m.onclick = () => { adjustCountForDate(c.id, selectedDay, -1); renderCalendar(); renderDayDetail(); renderStats(); renderToday(); };
+          const num = document.createElement('span');
+          num.className = 'row-count-num';
+          num.textContent = `${cnt} ${pluralize(cnt, c.unit || 'time')}`;
+          const p = document.createElement('button');
+          p.className = 'row-count-btn'; p.textContent = '+';
+          p.onclick = () => { adjustCountForDate(c.id, selectedDay, 1); renderCalendar(); renderDayDetail(); renderStats(); renderToday(); };
+          stp.appendChild(m); stp.appendChild(num); stp.appendChild(p);
+          row.appendChild(stp);
+        }
+        const rmv = document.createElement('button');
+        rmv.className = 'row-remove-btn'; rmv.innerHTML = '✕';
+        rmv.onclick = () => {
+          if (!confirm(`Remove "${c.name}" from ${formatDayLabel(selectedDay)}?`)) return;
+          removeChoreFromDate(c.id, selectedDay);
+          renderCalendar(); renderDayDetail(); renderStats(); renderToday();
+          showToast('Removed');
+        };
+        row.appendChild(rmv);
+        list.appendChild(row);
+      });
+    }
+    detail.appendChild(list);
+    const adder = document.createElement('div');
+    adder.className = 'day-editor-add';
+    const lbl = document.createElement('div');
+    lbl.className = 'add-label';
+    lbl.textContent = 'Add chore to this day';
+    adder.appendChild(lbl);
+    if (choresNotOnDay.length === 0) {
+      const e = document.createElement('div');
+      e.className = 'day-editor-empty-add';
+      e.textContent = 'All chores already logged for this day.';
+      adder.appendChild(e);
+    } else {
+      const chips = document.createElement('div');
+      chips.className = 'add-chips';
+      choresNotOnDay.forEach(c => {
+        const chip = document.createElement('button');
+        chip.className = 'add-chip';
+        chip.innerHTML = `<span>${escapeHtml(c.icon)}</span><span>${escapeHtml(c.name)}</span><span style="margin-left:2px;">+</span>`;
+        chip.onclick = () => {
+          addChoreToDate(c.id, selectedDay);
+          renderCalendar(); renderDayDetail(); renderStats(); renderToday();
+          showToast('Added');
+        };
+        chips.appendChild(chip);
+      });
+      adder.appendChild(chips);
+    }
+    detail.appendChild(adder);
+    slot.appendChild(detail);
+  }
+  function renderPicker() {
+    const picker = document.getElementById('chores-picker');
+    picker.innerHTML = '';
+    const all = document.createElement('button');
+    all.className = 'item-chip all-mode' + (selectedChore === 'all' ? ' active' : '');
+    all.textContent = '◆ All chores';
+    all.onclick = () => { selectedChore = 'all'; renderPicker(); renderCalendar(); renderDayDetail(); renderStats(); };
+    picker.appendChild(all);
+    visibleChores().forEach(c => {
+      const chip = document.createElement('button');
+      chip.className = 'item-chip' + (c.id === selectedChore ? ' active' : '');
+      chip.textContent = c.icon + ' ' + c.name;
+      chip.onclick = () => { selectedChore = c.id; renderPicker(); renderCalendar(); renderDayDetail(); renderStats(); };
+      picker.appendChild(chip);
+    });
+  }
+  function countMonth(id) {
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    return getChoreDates(id).filter(d => {
+      const dt = new Date(d + 'T00:00:00');
+      return dt.getFullYear() === year && dt.getMonth() === month;
+    }).length;
+  }
+  function sumCountInMonth(id) {
+    const counts = data[getCountKey(id)] || {};
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    let total = 0;
+    Object.keys(counts).forEach(d => {
+      const dt = new Date(d + 'T00:00:00');
+      if (dt.getFullYear() === year && dt.getMonth() === month) total += counts[d];
+    });
+    return total;
+  }
+  function sumCountAllTime(id) {
+    return Object.values(data[getCountKey(id)] || {}).reduce((a, b) => a + b, 0);
+  }
+  function renderStats() {
+    const grid = document.getElementById('chores-statsGrid');
+    grid.innerHTML = '';
+    visibleChores().forEach(c => {
+      const dates = getChoreDates(c.id);
+      const lastRel = dates.length > 0 ? relativeTime(dates[0]) : 'Never';
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      let extra = '';
+      if (c.counted) {
+        const u = c.unit || 'time';
+        extra = `<div class="stat-row"><span>${escapeHtml(pluralize(2, u))} this month</span><span class="v">${sumCountInMonth(c.id)}</span></div><div class="stat-row"><span>${escapeHtml(pluralize(2, u))} all time</span><span class="v">${sumCountAllTime(c.id)}</span></div>`;
+      }
+      card.innerHTML = `
+        <div class="stat-name">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</div>
+        <div class="stat-row"><span>Last done</span><span class="v">${escapeHtml(lastRel)}</span></div>
+        <div class="stat-row"><span>Days this month</span><span class="v">${countMonth(c.id)}</span></div>
+        <div class="stat-row"><span>Days all time</span><span class="v">${dates.length}</span></div>
+        ${extra}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Manager
+  function renderManager() {
+    const box = document.getElementById('chores-manager');
+    box.innerHTML = '';
+    CHORES.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.className = 'manage-row' + (c.hidden ? ' hidden-item' : '');
+      const name = document.createElement('div');
+      name.className = 'manage-name';
+      let badges = '';
+      if (c.counted) badges += `<span class="badge">${escapeHtml(c.unit || 'count')}</span>`;
+      if (c.hidden) badges += '<span class="badge hidden">hidden</span>';
+      name.innerHTML = `${escapeHtml(c.icon)} ${escapeHtml(c.name)}${badges}`;
+      row.appendChild(name);
+      row.appendChild(makeIconBtn('↑', () => moveItem(idx, -1)));
+      row.appendChild(makeIconBtn('↓', () => moveItem(idx, 1)));
+      row.appendChild(makeIconBtn('✎', () => openModal(c.id)));
+      row.appendChild(makeIconBtn(c.hidden ? '◎' : '●', () => toggleHide(c.id)));
+      const del = makeIconBtn('🗑', () => deleteItem(c.id));
+      del.classList.add('danger');
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function makeIconBtn(label, onClick) {
+    const b = document.createElement('button');
+    b.className = 'icon-btn';
+    b.textContent = label;
+    b.onclick = onClick;
+    return b;
+  }
+  function moveItem(idx, dir) {
+    const ni = idx + dir;
+    if (ni < 0 || ni >= CHORES.length) return;
+    [CHORES[idx], CHORES[ni]] = [CHORES[ni], CHORES[idx]];
+    saveItems(); renderManager(); renderToday(); renderPicker();
+  }
+  function toggleHide(id) {
+    const c = CHORES.find(x => x.id === id);
+    if (!c) return;
+    c.hidden = !c.hidden;
+    saveItems(); renderManager(); renderToday(); renderPicker(); renderStats();
+    showToast(c.hidden ? 'Chore hidden (data kept)' : 'Chore shown again');
+  }
+  function deleteItem(id) {
+    const c = CHORES.find(x => x.id === id);
+    if (!c) return;
+    const hasHistory = (data[id] || []).length > 0;
+    let msg = `Delete "${c.name}"?`;
+    if (hasHistory) msg += '\n\nThis chore has tracking history. Deleting will erase it. Use "hide" to keep history.';
+    if (!confirm(msg)) return;
+    CHORES = CHORES.filter(x => x.id !== id);
+    delete data[id]; delete data[getCountKey(id)];
+    saveItems(); saveData();
+    if (selectedChore === id) selectedChore = 'all';
+    Plan.onSourceDeleted('chores', id);
+    renderManager(); renderToday(); renderPicker(); renderCalendar(); renderStats();
+    showToast('Chore deleted');
+  }
+  function openModal(id) {
+    editingId = id || null;
+    const m = document.getElementById('choreModal');
+    document.getElementById('choreModalTitle').textContent = id ? 'Edit chore' : 'Add chore';
+    const counted = document.getElementById('choreCounted');
+    const unitField = document.getElementById('choreUnitField');
+    if (id) {
+      const c = CHORES.find(x => x.id === id);
+      document.getElementById('choreIcon').value = c.icon || '';
+      document.getElementById('choreName').value = c.name || '';
+      counted.checked = !!c.counted;
+      document.getElementById('choreUnit').value = c.unit || '';
+    } else {
+      document.getElementById('choreIcon').value = '';
+      document.getElementById('choreName').value = '';
+      counted.checked = false;
+      document.getElementById('choreUnit').value = '';
+    }
+    unitField.style.display = counted.checked ? 'flex' : 'none';
+    counted.onchange = () => { unitField.style.display = counted.checked ? 'flex' : 'none'; };
+    m.style.display = 'flex';
+    setTimeout(() => document.getElementById('choreName').focus(), 50);
+  }
+  function closeModal() { document.getElementById('choreModal').style.display = 'none'; editingId = null; }
+  function saveFromModal() {
+    const icon = document.getElementById('choreIcon').value.trim() || '•';
+    const name = document.getElementById('choreName').value.trim();
+    const counted = document.getElementById('choreCounted').checked;
+    const unit = document.getElementById('choreUnit').value.trim() || 'time';
+    if (!name) { showToast('Please enter a name'); return; }
+    if (editingId) {
+      const c = CHORES.find(x => x.id === editingId);
+      c.icon = icon; c.name = name;
+      c.counted = counted;
+      if (counted) c.unit = unit; else delete c.unit;
+      showToast('Chore updated');
+    } else {
+      const nc = { id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name, icon };
+      if (counted) { nc.counted = true; nc.unit = unit; }
+      CHORES.push(nc);
+      showToast('Chore added');
+    }
+    saveItems(); closeModal();
+    renderManager(); renderToday(); renderPicker(); renderStats();
+  }
+
+  function exportBackup() {
+    const payload = { version: 1, type: 'chores', exportedAt: new Date().toISOString(), chores: CHORES, data };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chores-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    localStorage.setItem('chores_lastBackup_v1', new Date().toISOString());
+    renderLastBackup(); renderBackupBanner();
+    showToast('Backup downloaded');
+  }
+  function importBackup(file) {
+    const r = new FileReader();
+    r.onload = e => {
+      try {
+        const p = JSON.parse(e.target.result);
+        const items = p.chores || p.items;
+        if (!items || !p.data) throw new Error('Invalid file');
+        if (!confirm('Restore chore data from backup? This will replace your current chores and history.')) return;
+        CHORES = items;
+        data = p.data;
+        saveItems(); saveData();
+        selectedChore = 'all';
+        selectedDay = null;
+        renderManager(); renderToday(); renderPicker(); renderCalendar(); renderDayDetail(); renderStats();
+        showToast('Backup restored');
+      } catch (err) { alert('Could not import: ' + err.message); }
+    };
+    r.readAsText(file);
+  }
+  function renderLastBackup() {
+    const el = document.getElementById('chores-lastBackup');
+    const last = localStorage.getItem('chores_lastBackup_v1');
+    if (last) {
+      const d = new Date(last);
+      el.textContent = `Last backup: ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+    } else el.textContent = 'No backup created yet.';
+  }
+  function resetAll() {
+    if (!confirm('Wipe ALL household chore data? Cannot be undone. Export first.')) return;
+    if (!confirm('Really sure?')) return;
+    ['chores_data_v1','chores_items_v1','chores_lastBackup_v1','chores_bannerDismissed_v1'].forEach(k => localStorage.removeItem(k));
+    location.reload();
+  }
+  function restoreDefaults() {
+    const defaultIds = DEFAULTS.map(c => c.id);
+    const customWithHistory = CHORES.filter(c => !defaultIds.includes(c.id) && (data[c.id] || []).length > 0);
+    let msg = 'Replace your current chore list with the app defaults? Your tracking history will NOT be touched.';
+    if (customWithHistory.length > 0) {
+      msg += `\n\nNote: ${customWithHistory.length} of your custom chore(s) with history will be removed from the list (their tracking data stays in case you re-add them later):\n• ${customWithHistory.map(c => c.name).join('\n• ')}`;
+    }
+    if (!confirm(msg)) return;
+    CHORES = JSON.parse(JSON.stringify(DEFAULTS));
+    saveItems();
+    selectedChore = 'all';
+    renderManager(); renderToday(); renderPicker(); renderCalendar(); renderStats();
+    showToast('Default chore list restored');
+  }
+  function renderBackupBanner() {
+    const slot = document.getElementById('chores-backupBanner');
+    slot.innerHTML = '';
+    const last = localStorage.getItem('chores_lastBackup_v1');
+    const dismissed = localStorage.getItem('chores_bannerDismissed_v1');
+    const total = Object.values(data).reduce((s, arr) => s + (Array.isArray(arr) ? arr.length : 0), 0);
+    if (total < 5) return;
+    const now = Date.now();
+    if (dismissed && (now - parseInt(dismissed)) < 7*24*60*60*1000) return;
+    const lastMs = last ? new Date(last).getTime() : 0;
+    if (last && (now - lastMs) / 86400000 < 7) return;
+    const banner = document.createElement('div');
+    banner.className = 'backup-banner';
+    const msg = last
+      ? `It's been over a week since your last chores backup. <button class="banner-action" id="chores-bannerBackup">Back up now</button>`
+      : `You've logged ${total} chores. <button class="banner-action" id="chores-bannerBackup">Back up your data</button>.`;
+    banner.innerHTML = `<span>💾</span><span class="msg">${msg}</span><button class="banner-close" id="chores-bannerClose">×</button>`;
+    slot.appendChild(banner);
+    document.getElementById('chores-bannerBackup').onclick = exportBackup;
+    document.getElementById('chores-bannerClose').onclick = () => { localStorage.setItem('chores_bannerDismissed_v1', Date.now().toString()); renderBackupBanner(); };
+  }
+
+  // Date picker
+  function openDatePicker() {
+    const m = document.getElementById('dateModal');
+    const inp = document.getElementById('dateInput');
+    inp.max = todayKey();
+    inp.value = todayKey();
+    m.style.display = 'flex';
+    setTimeout(() => inp.focus(), 50);
+  }
+  function closeDatePicker() { document.getElementById('dateModal').style.display = 'none'; }
+  function confirmDatePicker() {
+    const val = document.getElementById('dateInput').value;
+    if (!val) { showToast('Please pick a date'); return; }
+    if (val > todayKey()) { showToast('Cannot pick a future date'); return; }
+    closeDatePicker();
+    const dt = new Date(val + 'T00:00:00');
+    calDate = new Date(dt.getFullYear(), dt.getMonth(), 1);
+    selectedDay = val;
+    setTab('calendar');
+    setTimeout(() => {
+      const slot = document.getElementById('chores-dayDetail');
+      if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  function init() {
+    document.getElementById('chores-prevMonth').onclick = () => { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); renderStats(); };
+    document.getElementById('chores-nextMonth').onclick = () => { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); renderStats(); };
+    document.getElementById('chores-addBtn').onclick = () => openModal(null);
+    document.getElementById('chores-exportBtn').onclick = exportBackup;
+    document.getElementById('chores-importBtn').onclick = () => document.getElementById('chores-importFile').click();
+    document.getElementById('chores-importFile').onchange = e => { if (e.target.files[0]) importBackup(e.target.files[0]); e.target.value = ''; };
+    document.getElementById('chores-resetBtn').onclick = resetAll;
+    document.getElementById('chores-restoreDefaultsBtn').onclick = restoreDefaults;
+    document.getElementById('chores-logPastBtn').onclick = openDatePicker;
+    document.getElementById('choreModalSave').onclick = saveFromModal;
+    document.getElementById('choreModalCancel').onclick = closeModal;
+    document.getElementById('choreModal').onclick = e => { if (e.target.id === 'choreModal') closeModal(); };
+    document.getElementById('dateModalOpen').onclick = confirmDatePicker;
+    document.getElementById('dateModalCancel').onclick = closeDatePicker;
+    document.getElementById('dateModal').onclick = e => { if (e.target.id === 'dateModal') closeDatePicker(); };
+  }
+
+  return {
+    init, renderToday, renderCalendar, renderPicker, renderDayDetail, renderStats, renderManager, renderLastBackup, renderBackupBanner,
+    // exposed for the Plan tab
+    list: () => visibleChores(),
+    getDates: getChoreDates,
+    getItem: (id) => CHORES.find(c => c.id === id)
+  };
+})();
+
+// ============================================================
+// PLAN MODULE (shared planner across Personal + Household)
+// ============================================================
+const Plan = (() => {
+  // item: { id, name, icon, freq, link: {mode:'habits'|'chores', id} | null, lastDone: 'YYYY-MM-DD' | null }
+  let items = (() => { try { return JSON.parse(localStorage.getItem('plan_items_v1')) || []; } catch { return []; } })();
+
+  function save() { localStorage.setItem('plan_items_v1', JSON.stringify(items)); }
+
+  // Most recent completion date for a plan item
+  function lastDoneKey(item) {
+    if (!item.link) return item.lastDone || null;
+    if (item.link.mode === 'chores') {
+      const dates = Chores.getDates(item.link.id);
+      return dates[0] || null;
+    }
+    const dates = Habits.completionDates(item.link.id);
+    return dates.length ? dates[dates.length - 1] : null;
+  }
+
+  // Suggest a frequency (in days) from historical completion gaps
+  function suggestFreq(mode, id) {
+    let dates;
+    if (mode === 'chores') dates = [...Chores.getDates(id)].sort(); // oldest → newest
+    else dates = Habits.completionDates(id);
+    if (!dates || dates.length < 2) return { freq: 7, basis: 'default' };
+    const recent = dates.slice(-7); // last 7 completions → up to 6 gaps
+    let gaps = [];
+    for (let i = 1; i < recent.length; i++) {
+      const g = daysBetween(recent[i - 1], recent[i]);
+      if (g > 0) gaps.push(g);
+    }
+    if (gaps.length === 0) return { freq: 7, basis: 'default' };
+    const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    return { freq: Math.max(1, Math.round(avg)), basis: 'history' };
+  }
+
+  function nextDue(item) {
+    const last = lastDoneKey(item);
+    if (!last) return todayKey(); // never done → due today
+    return addDaysToKey(last, item.freq);
+  }
+
+  function displayName(item) {
+    if (!item.link) return { name: item.name, icon: item.icon };
+    const src = item.link.mode === 'chores' ? Chores.getItem(item.link.id) : Habits.getItem(item.link.id);
+    if (src) return { name: src.name, icon: src.icon };
+    return { name: item.name, icon: item.icon }; // fallback to snapshot
+  }
+
+  function render() {
+    const list = document.getElementById('plan-list');
+    list.innerHTML = '';
+    if (items.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon-large">🗓️</div><h3>Nothing planned yet</h3><p>Tap "Plan a task" to set how often things should happen.</p></div>`;
+      return;
+    }
+    const today = todayKey();
+    const sorted = [...items].sort((a, b) => {
+      const da = nextDue(a), db = nextDue(b);
+      if (da !== db) return da < db ? -1 : 1;
+      return displayName(a).name.localeCompare(displayName(b).name);
+    });
+    sorted.forEach(item => {
+      const { name, icon } = displayName(item);
+      const due = nextDue(item);
+      const diff = daysBetween(today, due); // negative = overdue
+      const last = lastDoneKey(item);
+
+      const card = document.createElement('div');
+      card.className = 'plan-card' + (diff < 0 ? ' due-overdue' : diff === 0 ? ' due-today' : '');
+
+      // Top row: icon + name + due tag
+      const top = document.createElement('div');
+      top.className = 'plan-top';
+      const iconEl = document.createElement('div');
+      iconEl.className = 'chore-icon';
+      iconEl.textContent = icon;
+      const body = document.createElement('div');
+      body.className = 'plan-body';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'plan-name';
+      let badge = '';
+      if (item.link) badge = `<span class="source-badge">${item.link.mode === 'chores' ? '🏠' : '🌱'}</span>`;
+      else badge = '<span class="source-badge standalone">plan only</span>';
+      nameEl.innerHTML = `${escapeHtml(name)}${badge}`;
+      const metaEl = document.createElement('div');
+      metaEl.className = 'plan-meta';
+      metaEl.textContent = last ? `Last done ${lastRelative(last)}` : 'Never done yet';
+      body.appendChild(nameEl); body.appendChild(metaEl);
+
+      const dueEl = document.createElement('div');
+      if (diff < 0) {
+        dueEl.className = 'due-tag overdue';
+        dueEl.innerHTML = `<span class="due-when">Overdue</span>by ${-diff} ${-diff === 1 ? 'day' : 'days'}`;
+      } else if (diff === 0) {
+        dueEl.className = 'due-tag today';
+        dueEl.innerHTML = `<span class="due-when">Due today</span>`;
+      } else {
+        dueEl.className = 'due-tag upcoming';
+        dueEl.innerHTML = `<span class="due-when">${escapeHtml(formatShortDate(due))}</span><span class="due-date">in ${diff} ${diff === 1 ? 'day' : 'days'}</span>`;
+      }
+      top.appendChild(iconEl); top.appendChild(body); top.appendChild(dueEl);
+      card.appendChild(top);
+
+      // Bottom row: frequency stepper + actions
+      const bottom = document.createElement('div');
+      bottom.className = 'plan-bottom';
+      const stepper = document.createElement('div');
+      stepper.className = 'freq-stepper';
+      const minus = document.createElement('button');
+      minus.className = 'row-count-btn'; minus.textContent = '−';
+      minus.onclick = () => { item.freq = Math.max(1, item.freq - 1); save(); render(); };
+      const label1 = document.createElement('span');
+      label1.textContent = 'every';
+      const num = document.createElement('span');
+      num.className = 'freq-num';
+      num.textContent = item.freq;
+      const label2 = document.createElement('span');
+      label2.textContent = item.freq === 1 ? 'day' : 'days';
+      const plus = document.createElement('button');
+      plus.className = 'row-count-btn'; plus.textContent = '+';
+      plus.onclick = () => { item.freq = Math.min(365, item.freq + 1); save(); render(); };
+      stepper.appendChild(label1); stepper.appendChild(minus); stepper.appendChild(num); stepper.appendChild(plus); stepper.appendChild(label2);
+      bottom.appendChild(stepper);
+
+      const actions = document.createElement('div');
+      actions.className = 'plan-actions';
+      if (!item.link) {
+        const doneBtn = document.createElement('button');
+        doneBtn.className = 'plan-done-btn';
+        const doneToday = item.lastDone === today;
+        doneBtn.textContent = doneToday ? '✓ Done today' : 'Done today';
+        if (doneToday) { doneBtn.disabled = true; doneBtn.style.opacity = '0.6'; }
+        else doneBtn.onclick = () => { item.lastDone = today; save(); render(); showToast('Nice — next due date updated'); };
+        actions.appendChild(doneBtn);
+      }
+      const rmv = document.createElement('button');
+      rmv.className = 'row-remove-btn';
+      rmv.innerHTML = '✕';
+      rmv.title = 'Remove from plan';
+      rmv.onclick = () => {
+        if (!confirm(`Remove "${name}" from the plan?${item.link ? '\n\nIts tracking history is untouched.' : ''}`)) return;
+        items = items.filter(x => x.id !== item.id);
+        save(); render();
+        showToast('Removed from plan');
+      };
+      actions.appendChild(rmv);
+      bottom.appendChild(actions);
+      card.appendChild(bottom);
+
+      list.appendChild(card);
+    });
+  }
+
+  function lastRelative(key) {
+    const days = daysBetween(key, todayKey());
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} ${Math.floor(days / 7) === 1 ? 'week' : 'weeks'} ago`;
+    return `${Math.floor(days / 30)} ${Math.floor(days / 30) === 1 ? 'month' : 'months'} ago`;
+  }
+
+  function isPlanned(mode, id) {
+    return items.some(x => x.link && x.link.mode === mode && x.link.id === id);
+  }
+
+  function addLinked(mode, id) {
+    const src = mode === 'chores' ? Chores.getItem(id) : Habits.getItem(id);
+    if (!src) return;
+    const { freq, basis } = suggestFreq(mode, id);
+    items.push({
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      name: src.name, icon: src.icon, // snapshot fallback
+      freq,
+      link: { mode, id },
+      lastDone: null
+    });
+    save();
+    closeModal();
+    render();
+    showToast(basis === 'history'
+      ? `Added — suggested every ${freq} ${freq === 1 ? 'day' : 'days'} from your history`
+      : `Added — every ${freq} days (edit anytime)`);
+  }
+
+  function addStandalone() {
+    const icon = document.getElementById('planIcon').value.trim() || '📌';
+    const name = document.getElementById('planName').value.trim();
+    let freq = parseInt(document.getElementById('planFreq').value, 10);
+    if (!name) { showToast('Please enter a name'); return; }
+    if (!freq || freq < 1) freq = 7;
+    if (freq > 365) freq = 365;
+    items.push({
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      name, icon, freq, link: null, lastDone: null
+    });
+    save();
+    closeModal();
+    render();
+    showToast('Task planned');
+  }
+
+  function openModal() {
+    // Personal chips
+    const hBox = document.getElementById('plan-habitChips');
+    hBox.innerHTML = '';
+    let hAny = false;
+    Habits.list().forEach(h => {
+      if (h.type === 'quantity') return; // water doesn't fit a frequency planner
+      if (isPlanned('habits', h.id)) return;
+      hAny = true;
+      const chip = document.createElement('button');
+      chip.className = 'add-chip';
+      chip.innerHTML = `<span>${escapeHtml(h.icon)}</span><span>${escapeHtml(h.name)}</span><span style="margin-left:2px;">+</span>`;
+      chip.onclick = () => addLinked('habits', h.id);
+      hBox.appendChild(chip);
+    });
+    if (!hAny) hBox.innerHTML = '<div class="day-editor-empty-add">All personal habits are already planned.</div>';
+    // Household chips
+    const cBox = document.getElementById('plan-choreChips');
+    cBox.innerHTML = '';
+    let cAny = false;
+    Chores.list().forEach(c => {
+      if (isPlanned('chores', c.id)) return;
+      cAny = true;
+      const chip = document.createElement('button');
+      chip.className = 'add-chip';
+      chip.innerHTML = `<span>${escapeHtml(c.icon)}</span><span>${escapeHtml(c.name)}</span><span style="margin-left:2px;">+</span>`;
+      chip.onclick = () => addLinked('chores', c.id);
+      cBox.appendChild(chip);
+    });
+    if (!cAny) cBox.innerHTML = '<div class="day-editor-empty-add">All household chores are already planned.</div>';
+    // Reset new-task fields
+    document.getElementById('planIcon').value = '';
+    document.getElementById('planName').value = '';
+    document.getElementById('planFreq').value = '7';
+    document.getElementById('planModal').style.display = 'flex';
+  }
+  function closeModal() { document.getElementById('planModal').style.display = 'none'; }
+
+  // Called when a habit/chore is permanently deleted: keep the plan item but
+  // convert it to standalone so nothing dangles, preserving its due rhythm.
+  function onSourceDeleted(mode, id) {
+    let changed = false;
+    items.forEach(item => {
+      if (item.link && item.link.mode === mode && item.link.id === id) {
+        item.lastDone = lastDoneKeySafe(item);
+        item.link = null;
+        changed = true;
+      }
+    });
+    if (changed) save();
+  }
+  function lastDoneKeySafe(item) {
+    try { return lastDoneKey(item); } catch { return item.lastDone || null; }
+  }
+
+  function init() {
+    document.getElementById('plan-addBtn').onclick = openModal;
+    document.getElementById('planModalSave').onclick = addStandalone;
+    document.getElementById('planModalCancel').onclick = closeModal;
+    document.getElementById('planModal').onclick = e => { if (e.target.id === 'planModal') closeModal(); };
+  }
+
+  return { init, render, onSourceDeleted };
+})();
+
+// ============================================================
+// GLOBAL EVENTS + INIT
+// ============================================================
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.onclick = () => setMode(b.dataset.mode);
+});
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => setTab(t.dataset.tab);
+});
+
+// Midnight refresh
+function scheduleMidnight() {
+  const now = new Date();
+  const m = new Date(now);
+  m.setHours(24, 0, 5, 0);
+  setTimeout(() => {
+    renderHeader();
+    if (currentTab === 'plan') Plan.render();
+    else if (currentMode === 'habits' && currentTab === 'today') Habits.renderToday();
+    else if (currentMode === 'chores' && currentTab === 'today') Chores.renderToday();
+    scheduleMidnight();
+  }, m - now);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// Init
+renderHeader();
+Habits.init();
+Chores.init();
+Plan.init();
+setMode(currentMode);
+scheduleMidnight();
 </script>
 </body>
 </html>
