@@ -1214,6 +1214,19 @@
         </div>
         <div class="last-backup" id="habits-lastBackup"></div>
       </div>
+      <div class="settings-section">
+        <h2 class="section-title">Cloud <em>sync</em></h2>
+        <p class="section-hint">Syncs everything (Personal, Household, and Plan) to your Google Sheet automatically a few seconds after each change. Paste your Apps Script web app URL to start.</p>
+        <label class="field">
+          <span>Apps Script web app URL</span>
+          <input type="text" class="sync-url" placeholder="https://script.google.com/macros/s/…/exec">
+        </label>
+        <div class="backup-row">
+          <button class="primary-btn sync-push">↑ Sync now</button>
+          <button class="secondary-btn sync-pull">↓ Pull from cloud</button>
+        </div>
+        <div class="last-backup sync-status"></div>
+      </div>
       <div class="settings-section danger-zone">
         <h2 class="section-title">Reset</h2>
         <p class="section-hint">Wipe all personal habit data. This cannot be undone — export first.</p>
@@ -1284,6 +1297,19 @@
           <input type="file" id="chores-importFile" accept="application/json" style="display:none">
         </div>
         <div class="last-backup" id="chores-lastBackup"></div>
+      </div>
+      <div class="settings-section">
+        <h2 class="section-title">Cloud <em>sync</em></h2>
+        <p class="section-hint">Syncs everything (Personal, Household, and Plan) to your Google Sheet automatically a few seconds after each change. Paste your Apps Script web app URL to start.</p>
+        <label class="field">
+          <span>Apps Script web app URL</span>
+          <input type="text" class="sync-url" placeholder="https://script.google.com/macros/s/…/exec">
+        </label>
+        <div class="backup-row">
+          <button class="primary-btn sync-push">↑ Sync now</button>
+          <button class="secondary-btn sync-pull">↓ Pull from cloud</button>
+        </div>
+        <div class="last-backup sync-status"></div>
       </div>
       <div class="settings-section danger-zone">
         <h2 class="section-title">Reset</h2>
@@ -1411,7 +1437,7 @@
 // ============================================================
 // VERSION
 // ============================================================
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 document.getElementById('appVersion').textContent = 'Tracker v' + APP_VERSION;
 
 // ============================================================
@@ -3050,6 +3076,126 @@ const Plan = (() => {
 })();
 
 // ============================================================
+// SYNC MODULE (Google Sheets via Apps Script)
+// ============================================================
+const Sync = (() => {
+  const KEYS = ['habits_items_v1','habits_data_v1','chores_items_v1','chores_data_v1','plan_items_v1'];
+  const origSetItem = localStorage.setItem.bind(localStorage);
+  let endpoint = localStorage.getItem('sync_endpoint_v1') || '';
+  let pushTimer = null;
+  let syncing = false;
+
+  // Hook localStorage: any write to a tracked key schedules an auto-push.
+  localStorage.setItem = function (k, v) {
+    origSetItem(k, v);
+    if (KEYS.includes(k)) markDirty();
+  };
+
+  function markDirty() {
+    if (!endpoint) return;
+    origSetItem('sync_dirty_v1', '1');
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => push(false), 3000); // debounced auto-sync
+  }
+
+  function status(msg, isError) {
+    document.querySelectorAll('.sync-status').forEach(el => {
+      el.textContent = msg;
+      el.style.color = isError ? 'var(--warn)' : '';
+    });
+  }
+  function renderStatus() {
+    const last = localStorage.getItem('sync_lastSync_v1');
+    if (!endpoint) { status('Not connected — paste your Apps Script URL above.'); return; }
+    if (localStorage.getItem('sync_dirty_v1')) { status('Changes waiting to sync…'); return; }
+    if (last) {
+      const d = new Date(last);
+      status(`Last synced: ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`);
+    } else status('Connected — not synced yet.');
+  }
+
+  function collect() {
+    const p = { savedAt: new Date().toISOString(), appVersion: APP_VERSION, stores: {} };
+    KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) p.stores[k] = v; });
+    return p;
+  }
+
+  async function push(manual) {
+    if (!endpoint) { if (manual) showToast('Paste your Apps Script URL first'); return; }
+    if (syncing) { markDirty(); return; }
+    syncing = true;
+    status('Syncing…');
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+        body: JSON.stringify({ action: 'save', payload: collect() })
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'Save failed');
+      localStorage.removeItem('sync_dirty_v1');
+      origSetItem('sync_lastSync_v1', new Date().toISOString());
+      renderStatus();
+      if (manual) showToast('Synced to Google Sheet ✓');
+    } catch (e) {
+      status('Sync failed — check connection. Will retry on next change.', true);
+      if (manual) alert('Sync failed: ' + e.message);
+    }
+    syncing = false;
+  }
+
+  async function pull(manual) {
+    if (!endpoint) { if (manual) showToast('Paste your Apps Script URL first'); return; }
+    status('Checking cloud…');
+    try {
+      const sep = endpoint.includes('?') ? '&' : '?';
+      const res = await fetch(endpoint + sep + 'action=load');
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'Load failed');
+      if (!j.payload || !j.payload.stores) {
+        renderStatus();
+        if (manual) showToast('Nothing in the cloud yet — sync from a device first');
+        return;
+      }
+      const when = new Date(j.payload.savedAt).toLocaleString();
+      if (!confirm(`Replace the data on THIS device with the cloud copy?\n\nCloud last saved: ${when}\n\nAnything not yet synced from this device will be lost.`)) {
+        renderStatus();
+        return;
+      }
+      Object.entries(j.payload.stores).forEach(([k, v]) => {
+        if (KEYS.includes(k)) origSetItem(k, v);
+      });
+      localStorage.removeItem('sync_dirty_v1');
+      origSetItem('sync_lastSync_v1', new Date().toISOString());
+      location.reload();
+    } catch (e) {
+      status('Cloud check failed — ' + e.message, true);
+      if (manual) alert('Pull failed: ' + e.message);
+    }
+  }
+
+  function init() {
+    document.querySelectorAll('.sync-url').forEach(inp => {
+      inp.value = endpoint;
+      inp.onchange = () => {
+        endpoint = inp.value.trim();
+        origSetItem('sync_endpoint_v1', endpoint);
+        document.querySelectorAll('.sync-url').forEach(o => { if (o !== inp) o.value = endpoint; });
+        renderStatus();
+        if (endpoint) push(true);
+      };
+    });
+    document.querySelectorAll('.sync-push').forEach(b => b.onclick = () => push(true));
+    document.querySelectorAll('.sync-pull').forEach(b => b.onclick = () => pull(true));
+    renderStatus();
+    // On open: push any unsynced changes from last session
+    if (endpoint && localStorage.getItem('sync_dirty_v1')) push(false);
+  }
+
+  return { init, renderStatus };
+})();
+
+// ============================================================
 // GLOBAL EVENTS + INIT
 // ============================================================
 document.querySelectorAll('.mode-btn').forEach(b => {
@@ -3084,6 +3230,7 @@ renderHeader();
 Habits.init();
 Chores.init();
 Plan.init();
+Sync.init();
 setMode(currentMode);
 scheduleMidnight();
 </script>
