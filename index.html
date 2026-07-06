@@ -1114,10 +1114,30 @@
   }
 
   @media (max-width: 500px) {
-    .brand { font-size: 24px; }
-    .summary { padding: 16px 18px; }
-    .summary-text .value { font-size: 20px; }
-    .mode-btn { padding: 8px 16px; font-size: 12px; }
+    body { padding-left: calc(12px + env(safe-area-inset-left)); padding-right: calc(12px + env(safe-area-inset-right)); }
+    .brand { font-size: 22px; }
+    header { margin-bottom: 14px; padding-bottom: 12px; }
+    .mode-switcher { margin-bottom: 12px; }
+    .mode-btn { padding: 7px 14px; font-size: 12px; }
+    .date-stamp { font-size: 11px; }
+    .date-stamp .day { font-size: 15px; }
+    .summary { padding: 14px 16px; margin-bottom: 14px; }
+    .summary-text .value { font-size: 19px; }
+    .ring { width: 52px; height: 52px; }
+    /* Tighter cards */
+    .habit, .chore, .plan-card { padding: 11px 13px; gap: 10px; border-radius: 12px; }
+    .habits, .chores, .plan-list { gap: 8px; }
+    .habit-name, .chore-name, .plan-name { font-size: 14px; }
+    .habit-meta, .chore-meta, .plan-meta { font-size: 11px; }
+    .chore-icon { width: 32px; height: 32px; font-size: 18px; border-radius: 8px; }
+    .check { width: 24px; height: 24px; }
+    .done-btn { padding: 8px 12px; font-size: 12px; }
+    .timer-btn { padding: 6px 11px; font-size: 12px; min-width: 68px; }
+    .water { padding: 14px; }
+    .section-label { margin: 14px 0 8px 4px; }
+    .today-actions { margin-bottom: 10px; }
+    .settings-section { padding: 16px; margin-bottom: 12px; }
+    .section-title { font-size: 19px; }
   }
 </style>
 </head>
@@ -1437,7 +1457,7 @@
 // ============================================================
 // VERSION
 // ============================================================
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.5';
 document.getElementById('appVersion').textContent = 'Tracker v' + APP_VERSION;
 
 // ============================================================
@@ -1557,6 +1577,8 @@ const Habits = (() => {
     { id: 'french', name: 'Learn French', icon: '🇫🇷' },
     { id: 'supplements', name: 'Take supplements', icon: '💊' },
     { id: 'water', name: 'Drink water', icon: '💧', type: 'quantity', unit: 'ml', step: 400, goal: 2500 },
+    { id: 'skincare_night', name: 'Night skincare', icon: '🧖🏻‍♀️' },
+    { id: 'skincare_morning', name: 'Morning skincare', icon: '🧖🏻‍♀️' },
   ];
   // Migration: try old key habitTrackerData_v1 → habits_data_v1, etc.
   function migrate() {
