@@ -441,7 +441,8 @@
     background: linear-gradient(90deg, var(--accent-light), var(--accent));
     border-radius: 10px; transition: width 0.4s ease;
   }
-  .water-controls { display: flex; gap: 8px; align-items: center; }
+  .water-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .water-controls .plus { flex: 0 0 auto; }
   .water-btn {
     flex: 1; padding: 10px 14px;
     border: 1px solid var(--accent);
@@ -1175,6 +1176,9 @@
     <!-- TODAY -->
     <div class="view active" id="habits-view-today">
       <div id="habits-backupBanner"></div>
+      <div class="today-actions">
+        <button class="link-btn" id="habits-logPastBtn">📅 Log for past date</button>
+      </div>
       <div class="summary">
         <div class="summary-text">
           <div class="label">Today's progress</div>
@@ -1189,6 +1193,7 @@
         </div>
       </div>
       <div class="habits" id="habits-list"></div>
+      <div id="events-section"></div>
     </div>
 
     <!-- CALENDAR -->
@@ -1212,7 +1217,9 @@
           <div class="legend-item"><span class="legend-sq partial"></span>Partial</div>
           <div class="legend-item"><span class="legend-sq empty"></span>None</div>
         </div>
+        <div class="day-editor-empty-add" style="margin-top:8px;">Tap any past day to log or edit habits for it.</div>
       </div>
+      <div id="habits-dayDetail"></div>
       <div class="stats-grid" id="habits-statsGrid"></div>
     </div>
 
@@ -1233,6 +1240,12 @@
           <input type="file" id="habits-importFile" accept="application/json" style="display:none">
         </div>
         <div class="last-backup" id="habits-lastBackup"></div>
+      </div>
+      <div class="settings-section">
+        <h2 class="section-title">Occasional <em>events</em><span class="settings-mode-label">Personal</span></h2>
+        <p class="section-hint">Things that happen every few weeks — haircuts, nails, dentist. Log each occurrence and the app works out how often they really happen.</p>
+        <div class="item-manager" id="events-manager"></div>
+        <button class="primary-btn" id="events-addBtn">+ Add new event</button>
       </div>
       <div class="settings-section">
         <h2 class="section-title">Cloud <em>sync</em></h2>
@@ -1366,9 +1379,68 @@
         <input type="checkbox" id="habitTimer">
         <span>Include stopwatch</span>
       </label>
+      <label class="field" id="habitGoalField" style="display:none">
+        <span>Daily goal (ml)</span>
+        <input type="number" id="habitGoal" min="100" max="10000" step="50" inputmode="numeric">
+      </label>
+      <label class="field" id="habitStepField" style="display:none">
+        <span>Amount per tap (ml)</span>
+        <input type="number" id="habitStep" min="50" max="2000" step="50" inputmode="numeric">
+      </label>
       <div class="modal-actions">
         <button class="secondary-btn" id="habitModalCancel">Cancel</button>
         <button class="primary-btn" id="habitModalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HABITS PAST-DATE MODAL -->
+  <div class="modal-backdrop" id="habitsDateModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title">Pick a date</h3>
+      <p class="section-hint">Choose a past day to log or edit habits for. Future dates aren't allowed.</p>
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="habitsDateInput">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="habitsDateCancel">Cancel</button>
+        <button class="primary-btn" id="habitsDateOpen">Open day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT EDIT MODAL -->
+  <div class="modal-backdrop" id="eventModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title" id="eventModalTitle">Add event</h3>
+      <label class="field">
+        <span>Icon (emoji)</span>
+        <input type="text" id="eventIcon" maxlength="4" placeholder="✂️">
+      </label>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="eventName" maxlength="40" placeholder="e.g. Haircut">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="eventModalCancel">Cancel</button>
+        <button class="primary-btn" id="eventModalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT PAST-DATE MODAL -->
+  <div class="modal-backdrop" id="eventDateModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title" id="eventDateTitle">Log past date</h3>
+      <p class="section-hint">Pick the day this happened. Future dates aren't allowed.</p>
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="eventDateInput">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="eventDateCancel">Cancel</button>
+        <button class="primary-btn" id="eventDateConfirm">Log it</button>
       </div>
     </div>
   </div>
@@ -1424,6 +1496,8 @@
         <p class="section-hint">Tap an existing task — a frequency will be suggested from your history — or create a planner-only task below.</p>
         <div class="source-group-label">🌱 Personal</div>
         <div class="source-chips" id="plan-habitChips"></div>
+        <div class="source-group-label">✨ Occasional</div>
+        <div class="source-chips" id="plan-eventChips"></div>
         <div class="source-group-label">🏠 Household</div>
         <div class="source-chips" id="plan-choreChips"></div>
         <div class="new-task-fields">
@@ -1457,7 +1531,7 @@
 // ============================================================
 // VERSION
 // ============================================================
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.13';
 document.getElementById('appVersion').textContent = 'Tracker v' + APP_VERSION;
 
 // ============================================================
@@ -1546,9 +1620,9 @@ function setTab(tab) {
   });
   // Re-render appropriate views
   if (currentMode === 'habits') {
-    if (tab === 'today') Habits.renderToday();
-    if (tab === 'calendar') { Habits.renderPicker(); Habits.renderCalendar(); Habits.renderStats(); }
-    if (tab === 'settings') { Habits.renderManager(); Habits.renderLastBackup(); }
+    if (tab === 'today') { Habits.renderToday(); Events.renderToday(); }
+    if (tab === 'calendar') { Habits.renderPicker(); Habits.renderCalendar(); Habits.renderDayDetail(); Habits.renderStats(); }
+    if (tab === 'settings') { Habits.renderManager(); Events.renderManager(); Habits.renderLastBackup(); }
   } else {
     if (tab === 'today') Chores.renderToday();
     if (tab === 'calendar') { Chores.renderPicker(); Chores.renderCalendar(); Chores.renderDayDetail(); Chores.renderStats(); }
@@ -1604,6 +1678,7 @@ const Habits = (() => {
   let timers = (() => { try { return JSON.parse(localStorage.getItem('habits_timers_v1')) || {}; } catch { return {}; } })();
   let calDate = new Date();
   let selectedHabit = HABITS[0] ? HABITS[0].id : null;
+  let selectedDay = null;
   let tickInterval = null;
   let editingId = null;
 
@@ -1755,26 +1830,32 @@ const Habits = (() => {
     card.innerHTML = `
       <div class="water-head">
         <div class="water-title">${escapeHtml(habit.icon)} ${escapeHtml(habit.name)}</div>
-        <div class="water-amount"><span>${amount}</span><span class="total"> / ${habit.goal} ${escapeHtml(habit.unit || 'ml')}</span></div>
+        <div class="water-amount"><span class="water-num" title="Tap to type an amount">${amount}</span><span class="total"> / ${habit.goal} ${escapeHtml(habit.unit || 'ml')}</span></div>
       </div>
       <div class="water-bar"><div class="water-fill" style="width:${pct}%"></div></div>
       <div class="water-controls">
-        <button class="water-btn minus">− ${habit.step}${escapeHtml(habit.unit || 'ml')}</button>
-        <button class="water-btn plus">+ ${habit.step}${escapeHtml(habit.unit || 'ml')}</button>
+        <div class="water-input-wrap" style="flex:1;display:flex;gap:6px;min-width:120px;">
+          <input type="number" class="water-input" inputmode="numeric" min="1" max="20000" placeholder="Add ${escapeHtml(habit.unit || 'ml')}…"
+            style="flex:1;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:white;outline:none;-webkit-user-select:auto;user-select:auto;-webkit-appearance:none;appearance:none;">
+          <button class="water-btn water-enter" style="flex:0 0 auto;">⏎</button>
+        </div>
         <button class="water-btn minus reset-btn">Reset</button>
       </div>
       <div class="water-meta">🔥 ${streaks.current} day streak · best ${streaks.longest}</div>
     `;
-    card.querySelector('.plus').onclick = () => {
+    // Typed amount → add to today's total
+    const wInput = card.querySelector('.water-input');
+    const addTyped = () => {
+      let v = parseInt(wInput.value, 10);
+      if (isNaN(v) || v <= 0) { showToast('Type an amount first'); return; }
+      if (v > 20000) v = 20000;
       const d = getDay(todayKey());
-      d[habit.id] = (d[habit.id] || 0) + habit.step;
+      d[habit.id] = Math.min(99999, (d[habit.id] || 0) + v);
       saveData(); renderToday();
+      showToast(`+${v}${habit.unit || 'ml'} logged`);
     };
-    card.querySelector('.minus:not(.reset-btn)').onclick = () => {
-      const d = getDay(todayKey());
-      d[habit.id] = Math.max(0, (d[habit.id] || 0) - habit.step);
-      saveData(); renderToday();
-    };
+    card.querySelector('.water-enter').onclick = addTyped;
+    wInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addTyped(); } };
     card.querySelector('.reset-btn').onclick = () => {
       const d = getDay(todayKey());
       d[habit.id] = 0;
@@ -1842,14 +1923,105 @@ const Habits = (() => {
       el.textContent = d;
       const dayData = data[key];
       if (dt > todayDate) el.classList.add('future');
-      else if (dayData) {
-        if (isComplete(dayData, habit, key)) el.classList.add('done');
-        else if (hasAny(dayData, habit)) el.classList.add('partial');
+      else {
+        if (dayData) {
+          if (isComplete(dayData, habit, key)) el.classList.add('done');
+          else if (hasAny(dayData, habit)) el.classList.add('partial');
+        }
+        el.onclick = () => selectDay(key);
       }
       if (key === todayStr) el.classList.add('today');
+      if (key === selectedDay) el.style.boxShadow = '0 0 0 2px var(--accent)';
       days.appendChild(el);
     }
   }
+  function selectDay(key) {
+    selectedDay = (selectedDay === key) ? null : key;
+    renderCalendar();
+    renderDayDetail();
+  }
+  function dayLabel(key) {
+    const t = todayKey();
+    const y = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dateKey(d); })();
+    if (key === t) return 'Today';
+    if (key === y) return 'Yesterday';
+    return formatShortDate(key);
+  }
+  function renderDayDetail() {
+    const slot = document.getElementById('habits-dayDetail');
+    slot.innerHTML = '';
+    if (!selectedDay) return;
+    const detail = document.createElement('div');
+    detail.className = 'day-detail';
+    detail.innerHTML = `<div class="day-detail-title"><em>${escapeHtml(dayLabel(selectedDay))}</em></div>`;
+    const list = document.createElement('div');
+    list.className = 'day-detail-list';
+    const dayData = getDay(selectedDay);
+    visibleHabits().forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'day-detail-row';
+      const content = document.createElement('div');
+      content.className = 'day-row-content';
+      content.innerHTML = `<span class="icon-mini">${escapeHtml(h.icon)}</span><span>${escapeHtml(h.name)}</span>`;
+      row.appendChild(content);
+      if (h.type === 'quantity') {
+        const stp = document.createElement('div');
+        stp.className = 'row-count-stepper';
+        const m = document.createElement('button');
+        m.className = 'row-count-btn'; m.textContent = '−';
+        m.onclick = () => {
+          dayData[h.id] = Math.max(0, (dayData[h.id] || 0) - h.step);
+          saveData(); renderDayDetail(); renderCalendar(); renderStats(); renderToday();
+        };
+        const num = document.createElement('span');
+        num.className = 'row-count-num';
+        num.textContent = `${dayData[h.id] || 0}${h.unit || 'ml'}`;
+        num.style.minWidth = '58px';
+        const p = document.createElement('button');
+        p.className = 'row-count-btn'; p.textContent = '+';
+        p.onclick = () => {
+          dayData[h.id] = (dayData[h.id] || 0) + h.step;
+          saveData(); renderDayDetail(); renderCalendar(); renderStats(); renderToday();
+        };
+        stp.appendChild(m); stp.appendChild(num); stp.appendChild(p);
+        row.appendChild(stp);
+      } else {
+        const ms = dayData[h.id + '_ms'] || 0;
+        if (h.timer && ms > 0) {
+          const t = document.createElement('span');
+          t.className = 'row-count-num';
+          t.style.marginLeft = 'auto';
+          t.textContent = Math.round(ms / 60000) + ' min';
+          row.appendChild(t);
+        }
+        const btn = document.createElement('button');
+        btn.className = 'check';
+        btn.style.width = '24px'; btn.style.height = '24px';
+        if (!(h.timer && ms > 0)) btn.style.marginLeft = 'auto';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:white;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;"><polyline points="4 12 10 18 20 6"></polyline></svg>';
+        const done = isComplete(dayData, h, selectedDay);
+        if (done) { btn.style.background = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'; btn.querySelector('svg').style.opacity = '1'; }
+        else btn.querySelector('svg').style.opacity = '0';
+        btn.onclick = () => {
+          if (h.timer && ms > 0 && !dayData[h.id]) {
+            showToast('Stays complete — time was logged that day');
+            return;
+          }
+          dayData[h.id] = !dayData[h.id];
+          saveData(); renderDayDetail(); renderCalendar(); renderStats(); renderToday();
+        };
+        row.appendChild(btn);
+      }
+      list.appendChild(row);
+    });
+    detail.appendChild(list);
+    const hint = document.createElement('div');
+    hint.className = 'day-editor-empty-add';
+    hint.textContent = 'Tap the circles to log or unlog habits for this day.';
+    detail.appendChild(hint);
+    slot.appendChild(detail);
+  }
+
   function renderPicker() {
     const picker = document.getElementById('habits-picker');
     picker.innerHTML = '';
@@ -1987,11 +2159,20 @@ const Habits = (() => {
       document.getElementById('habitName').value = h.name || '';
       document.getElementById('habitTimer').checked = !!h.timer;
       document.getElementById('habitTimer').disabled = h.type === 'quantity';
+      const isQty = h.type === 'quantity';
+      document.getElementById('habitGoalField').style.display = isQty ? 'flex' : 'none';
+      document.getElementById('habitStepField').style.display = isQty ? 'flex' : 'none';
+      if (isQty) {
+        document.getElementById('habitGoal').value = h.goal || 2500;
+        document.getElementById('habitStep').value = h.step || 400;
+      }
     } else {
       document.getElementById('habitIcon').value = '';
       document.getElementById('habitName').value = '';
       document.getElementById('habitTimer').checked = false;
       document.getElementById('habitTimer').disabled = false;
+      document.getElementById('habitGoalField').style.display = 'none';
+      document.getElementById('habitStepField').style.display = 'none';
     }
     m.style.display = 'flex';
     setTimeout(() => document.getElementById('habitName').focus(), 50);
@@ -2006,6 +2187,12 @@ const Habits = (() => {
       const h = HABITS.find(x => x.id === editingId);
       h.icon = icon; h.name = name;
       if (h.type !== 'quantity') h.timer = timer;
+      if (h.type === 'quantity') {
+        let goal = parseInt(document.getElementById('habitGoal').value, 10);
+        let step = parseInt(document.getElementById('habitStep').value, 10);
+        if (goal >= 100 && goal <= 10000) h.goal = goal;
+        if (step >= 50 && step <= 2000) h.step = step;
+      }
       showToast('Habit updated');
     } else {
       const nh = { id: 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name, icon };
@@ -2019,7 +2206,9 @@ const Habits = (() => {
 
   // Backup
   function exportBackup() {
-    const payload = { version: 1, type: 'habits', exportedAt: new Date().toISOString(), habits: HABITS, data };
+    const payload = { version: 1, type: 'habits', exportedAt: new Date().toISOString(), habits: HABITS, data,
+      events_items: JSON.parse(localStorage.getItem('events_items_v1') || '[]'),
+      events_data: JSON.parse(localStorage.getItem('events_data_v1') || '{}') };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2043,10 +2232,11 @@ const Habits = (() => {
         HABITS = items;
         data = p.data;
         timers = {};
+        if (p.events_items) localStorage.setItem('events_items_v1', JSON.stringify(p.events_items));
+        if (p.events_data) localStorage.setItem('events_data_v1', JSON.stringify(p.events_data));
         saveItems(); saveData(); saveTimers(); stopTick();
-        selectedHabit = HABITS[0] ? HABITS[0].id : null;
-        renderManager(); renderToday(); renderPicker(); renderCalendar(); renderStats();
         showToast('Backup restored');
+        setTimeout(() => location.reload(), 600);
       } catch (err) { alert('Could not import: ' + err.message); }
     };
     r.readAsText(file);
@@ -2062,7 +2252,7 @@ const Habits = (() => {
   function resetAll() {
     if (!confirm('Wipe ALL personal habit data? Cannot be undone. Export first.')) return;
     if (!confirm('Really sure?')) return;
-    ['habits_data_v1','habits_items_v1','habits_timers_v1','habits_lastBackup_v1','habits_bannerDismissed_v1'].forEach(k => localStorage.removeItem(k));
+    ['habits_data_v1','habits_items_v1','habits_timers_v1','habits_lastBackup_v1','habits_bannerDismissed_v1','events_items_v1','events_data_v1'].forEach(k => localStorage.removeItem(k));
     location.reload();
   }
   function renderBackupBanner() {
@@ -2086,6 +2276,28 @@ const Habits = (() => {
     document.getElementById('habits-bannerClose').onclick = () => { localStorage.setItem('habits_bannerDismissed_v1', Date.now().toString()); renderBackupBanner(); };
   }
 
+  function openDatePicker() {
+    const inp = document.getElementById('habitsDateInput');
+    inp.max = todayKey();
+    inp.value = todayKey();
+    document.getElementById('habitsDateModal').style.display = 'flex';
+  }
+  function closeDatePicker() { document.getElementById('habitsDateModal').style.display = 'none'; }
+  function confirmDatePicker() {
+    const val = document.getElementById('habitsDateInput').value;
+    if (!val) { showToast('Please pick a date'); return; }
+    if (val > todayKey()) { showToast('Cannot pick a future date'); return; }
+    closeDatePicker();
+    const dt = new Date(val + 'T00:00:00');
+    calDate = new Date(dt.getFullYear(), dt.getMonth(), 1);
+    selectedDay = val;
+    setTab('calendar');
+    setTimeout(() => {
+      const slot = document.getElementById('habits-dayDetail');
+      if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   function init() {
     document.getElementById('habits-prevMonth').onclick = () => { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); renderStats(); };
     document.getElementById('habits-nextMonth').onclick = () => { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); renderStats(); };
@@ -2094,6 +2306,10 @@ const Habits = (() => {
     document.getElementById('habits-importBtn').onclick = () => document.getElementById('habits-importFile').click();
     document.getElementById('habits-importFile').onchange = e => { if (e.target.files[0]) importBackup(e.target.files[0]); e.target.value = ''; };
     document.getElementById('habits-resetBtn').onclick = resetAll;
+    document.getElementById('habits-logPastBtn').onclick = openDatePicker;
+    document.getElementById('habitsDateOpen').onclick = confirmDatePicker;
+    document.getElementById('habitsDateCancel').onclick = closeDatePicker;
+    document.getElementById('habitsDateModal').onclick = e => { if (e.target.id === 'habitsDateModal') closeDatePicker(); };
     document.getElementById('habitModalSave').onclick = saveFromModal;
     document.getElementById('habitModalCancel').onclick = closeModal;
     document.getElementById('habitModal').onclick = e => { if (e.target.id === 'habitModal') closeModal(); };
@@ -2101,7 +2317,7 @@ const Habits = (() => {
   }
 
   return {
-    init, renderToday, renderCalendar, renderPicker, renderStats, renderManager, renderLastBackup, renderBackupBanner,
+    init, renderToday, renderCalendar, renderPicker, renderStats, renderManager, renderLastBackup, renderBackupBanner, renderDayDetail,
     // exposed for the Plan tab
     list: () => visibleHabits(),
     completionDates,
@@ -2829,6 +3045,255 @@ const Chores = (() => {
 })();
 
 // ============================================================
+// OCCASIONAL EVENTS MODULE (Personal mode: haircut, nails, …)
+// ============================================================
+const Events = (() => {
+  const DEFAULTS = [
+    { id: 'haircut', name: 'Haircut', icon: '✂️' },
+    { id: 'nails', name: 'Nails', icon: '💅' },
+  ];
+  let data = (() => { try { return JSON.parse(localStorage.getItem('events_data_v1')) || {}; } catch { return {}; } })();
+  let ITEMS = (() => {
+    try { const raw = localStorage.getItem('events_items_v1'); if (raw) return JSON.parse(raw); } catch {}
+    localStorage.setItem('events_items_v1', JSON.stringify(DEFAULTS));
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  })();
+  let editingId = null;
+
+  function saveData() { localStorage.setItem('events_data_v1', JSON.stringify(data)); }
+  function saveItems() { localStorage.setItem('events_items_v1', JSON.stringify(ITEMS)); }
+  function visible() { return ITEMS.filter(e => !e.hidden); }
+  function getDates(id) { return data[id] || []; }
+
+  function relTime(key) {
+    const days = daysBetween(key, todayKey());
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} ${Math.floor(days / 7) === 1 ? 'week' : 'weeks'} ago`;
+    return `${Math.floor(days / 30)} ${Math.floor(days / 30) === 1 ? 'month' : 'months'} ago`;
+  }
+  function avgGapText(id) {
+    const dates = [...getDates(id)].sort(); // oldest → newest
+    if (dates.length < 2) return '';
+    const recent = dates.slice(-7);
+    const gaps = [];
+    for (let i = 1; i < recent.length; i++) {
+      const g = daysBetween(recent[i - 1], recent[i]);
+      if (g > 0) gaps.push(g);
+    }
+    if (!gaps.length) return '';
+    const avg = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+    return `≈ every ${avg} days`;
+  }
+  function markDone(id) {
+    const t = todayKey();
+    if (!data[id]) data[id] = [];
+    if (data[id].includes(t)) return;
+    data[id].unshift(t);
+    data[id].sort().reverse();
+    saveData();
+    renderToday();
+    showToast('Logged ✓');
+  }
+  function undoToday(id) {
+    const t = todayKey();
+    if (!data[id] || !data[id].includes(t)) return;
+    data[id] = data[id].filter(d => d !== t);
+    if (data[id].length === 0) delete data[id];
+    saveData();
+    renderToday();
+    showToast('Undone');
+  }
+
+  function renderToday() {
+    const slot = document.getElementById('events-section');
+    slot.innerHTML = '';
+    const vis = visible();
+    if (vis.length === 0) return;
+    const heading = document.createElement('div');
+    heading.className = 'section-label';
+    heading.textContent = 'Occasional';
+    slot.appendChild(heading);
+    const list = document.createElement('div');
+    list.className = 'chores';
+    vis.forEach(ev => {
+      const el = document.createElement('div');
+      el.className = 'chore';
+      const icon = document.createElement('div');
+      icon.className = 'chore-icon';
+      icon.textContent = ev.icon;
+      const body = document.createElement('div');
+      body.className = 'chore-body';
+      const name = document.createElement('div');
+      name.className = 'chore-name';
+      name.textContent = ev.name;
+      const meta = document.createElement('div');
+      meta.className = 'chore-meta';
+      const dates = getDates(ev.id);
+      if (dates.length === 0) {
+        meta.innerHTML = '<span class="never">Never logged</span>';
+      } else {
+        const parts = [`Last: ${relTime(dates[0])}`];
+        const avg = avgGapText(ev.id);
+        if (avg) parts.push(avg);
+        parts.push(`${dates.length}× total`);
+        meta.textContent = parts.join(' · ');
+      }
+      body.appendChild(name); body.appendChild(meta);
+      el.appendChild(icon); el.appendChild(body);
+      const dateBtn = document.createElement('button');
+      dateBtn.className = 'icon-btn';
+      dateBtn.textContent = '📅';
+      dateBtn.title = 'Log a past date';
+      dateBtn.onclick = () => openDateModal(ev.id);
+      el.appendChild(dateBtn);
+      const btn = document.createElement('button');
+      btn.className = 'done-btn';
+      const doneToday = dates[0] === todayKey();
+      btn.textContent = doneToday ? '✓ Today' : 'Log today';
+      btn.onclick = () => {
+        if (doneToday) { if (confirm(`Remove today's "${ev.name}" log?`)) undoToday(ev.id); }
+        else markDone(ev.id);
+      };
+      el.appendChild(btn);
+      list.appendChild(el);
+    });
+    slot.appendChild(list);
+  }
+
+  function renderManager() {
+    const box = document.getElementById('events-manager');
+    box.innerHTML = '';
+    ITEMS.forEach((ev, idx) => {
+      const row = document.createElement('div');
+      row.className = 'manage-row' + (ev.hidden ? ' hidden-item' : '');
+      const name = document.createElement('div');
+      name.className = 'manage-name';
+      const cnt = getDates(ev.id).length;
+      let badges = cnt ? `<span class="badge">${cnt}×</span>` : '';
+      if (ev.hidden) badges += '<span class="badge hidden">hidden</span>';
+      name.innerHTML = `${escapeHtml(ev.icon)} ${escapeHtml(ev.name)}${badges}`;
+      row.appendChild(name);
+      row.appendChild(mkBtn('↑', () => move(idx, -1)));
+      row.appendChild(mkBtn('↓', () => move(idx, 1)));
+      row.appendChild(mkBtn('✎', () => openModal(ev.id)));
+      row.appendChild(mkBtn(ev.hidden ? '◎' : '●', () => toggleHide(ev.id)));
+      const del = mkBtn('🗑', () => deleteItem(ev.id));
+      del.classList.add('danger');
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function mkBtn(label, onClick) {
+    const b = document.createElement('button');
+    b.className = 'icon-btn'; b.textContent = label; b.onclick = onClick;
+    return b;
+  }
+  function move(idx, dir) {
+    const ni = idx + dir;
+    if (ni < 0 || ni >= ITEMS.length) return;
+    [ITEMS[idx], ITEMS[ni]] = [ITEMS[ni], ITEMS[idx]];
+    saveItems(); renderManager(); renderToday();
+  }
+  function toggleHide(id) {
+    const ev = ITEMS.find(x => x.id === id);
+    if (!ev) return;
+    ev.hidden = !ev.hidden;
+    saveItems(); renderManager(); renderToday();
+    showToast(ev.hidden ? 'Event hidden (data kept)' : 'Event shown again');
+  }
+  function deleteItem(id) {
+    const ev = ITEMS.find(x => x.id === id);
+    if (!ev) return;
+    const cnt = getDates(id).length;
+    let msg = `Delete "${ev.name}"?`;
+    if (cnt) msg += `\n\nIt has ${cnt} logged ${cnt === 1 ? 'date' : 'dates'} which will be erased. Use "hide" to keep them.`;
+    if (!confirm(msg)) return;
+    ITEMS = ITEMS.filter(x => x.id !== id);
+    delete data[id];
+    saveItems(); saveData();
+    Plan.onSourceDeleted('events', id);
+    renderManager(); renderToday();
+    showToast('Event deleted');
+  }
+  function openModal(id) {
+    editingId = id || null;
+    document.getElementById('eventModalTitle').textContent = id ? 'Edit event' : 'Add event';
+    if (id) {
+      const ev = ITEMS.find(x => x.id === id);
+      document.getElementById('eventIcon').value = ev.icon || '';
+      document.getElementById('eventName').value = ev.name || '';
+    } else {
+      document.getElementById('eventIcon').value = '';
+      document.getElementById('eventName').value = '';
+    }
+    document.getElementById('eventModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('eventName').focus(), 50);
+  }
+  function closeModal() { document.getElementById('eventModal').style.display = 'none'; editingId = null; }
+  function saveFromModal() {
+    const icon = document.getElementById('eventIcon').value.trim() || '•';
+    const name = document.getElementById('eventName').value.trim();
+    if (!name) { showToast('Please enter a name'); return; }
+    if (editingId) {
+      const ev = ITEMS.find(x => x.id === editingId);
+      ev.icon = icon; ev.name = name;
+      showToast('Event updated');
+    } else {
+      ITEMS.push({ id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name, icon });
+      showToast('Event added');
+    }
+    saveItems(); closeModal();
+    renderManager(); renderToday();
+  }
+
+  let dateModalEventId = null;
+  function openDateModal(id) {
+    const ev = ITEMS.find(x => x.id === id);
+    if (!ev) return;
+    dateModalEventId = id;
+    document.getElementById('eventDateTitle').textContent = `Log "${ev.name}"`;
+    const inp = document.getElementById('eventDateInput');
+    inp.max = todayKey();
+    inp.value = todayKey();
+    document.getElementById('eventDateModal').style.display = 'flex';
+  }
+  function closeDateModal() { document.getElementById('eventDateModal').style.display = 'none'; dateModalEventId = null; }
+  function confirmDateModal() {
+    const val = document.getElementById('eventDateInput').value;
+    if (!val) { showToast('Please pick a date'); return; }
+    if (val > todayKey()) { showToast('Cannot pick a future date'); return; }
+    const id = dateModalEventId;
+    if (!data[id]) data[id] = [];
+    if (data[id].includes(val)) { showToast('Already logged that day'); closeDateModal(); return; }
+    data[id].unshift(val);
+    data[id].sort().reverse();
+    saveData();
+    closeDateModal();
+    renderToday();
+    showToast('Logged ✓');
+  }
+
+  function init() {
+    document.getElementById('events-addBtn').onclick = () => openModal(null);
+    document.getElementById('eventModalSave').onclick = saveFromModal;
+    document.getElementById('eventModalCancel').onclick = closeModal;
+    document.getElementById('eventModal').onclick = e => { if (e.target.id === 'eventModal') closeModal(); };
+    document.getElementById('eventDateConfirm').onclick = confirmDateModal;
+    document.getElementById('eventDateCancel').onclick = closeDateModal;
+    document.getElementById('eventDateModal').onclick = e => { if (e.target.id === 'eventDateModal') closeDateModal(); };
+  }
+
+  return {
+    init, renderToday, renderManager,
+    list: () => visible(),
+    getDates,
+    getItem: (id) => ITEMS.find(e => e.id === id)
+  };
+})();
+
+// ============================================================
 // PLAN MODULE (shared planner across Personal + Household)
 // ============================================================
 const Plan = (() => {
@@ -2844,6 +3309,10 @@ const Plan = (() => {
       const dates = Chores.getDates(item.link.id);
       return dates[0] || null;
     }
+    if (item.link.mode === 'events') {
+      const dates = Events.getDates(item.link.id);
+      return dates[0] || null;
+    }
     const dates = Habits.completionDates(item.link.id);
     return dates.length ? dates[dates.length - 1] : null;
   }
@@ -2852,6 +3321,7 @@ const Plan = (() => {
   function suggestFreq(mode, id) {
     let dates;
     if (mode === 'chores') dates = [...Chores.getDates(id)].sort(); // oldest → newest
+    else if (mode === 'events') dates = [...Events.getDates(id)].sort();
     else dates = Habits.completionDates(id);
     if (!dates || dates.length < 2) return { freq: 7, basis: 'default' };
     const recent = dates.slice(-7); // last 7 completions → up to 6 gaps
@@ -2873,7 +3343,9 @@ const Plan = (() => {
 
   function displayName(item) {
     if (!item.link) return { name: item.name, icon: item.icon };
-    const src = item.link.mode === 'chores' ? Chores.getItem(item.link.id) : Habits.getItem(item.link.id);
+    const src = item.link.mode === 'chores' ? Chores.getItem(item.link.id)
+              : item.link.mode === 'events' ? Events.getItem(item.link.id)
+              : Habits.getItem(item.link.id);
     if (src) return { name: src.name, icon: src.icon };
     return { name: item.name, icon: item.icon }; // fallback to snapshot
   }
@@ -2911,7 +3383,7 @@ const Plan = (() => {
       const nameEl = document.createElement('div');
       nameEl.className = 'plan-name';
       let badge = '';
-      if (item.link) badge = `<span class="source-badge">${item.link.mode === 'chores' ? '🏠' : '🌱'}</span>`;
+      if (item.link) badge = `<span class="source-badge">${item.link.mode === 'chores' ? '🏠' : item.link.mode === 'events' ? '✨' : '🌱'}</span>`;
       else badge = '<span class="source-badge standalone">plan only</span>';
       nameEl.innerHTML = `${escapeHtml(name)}${badge}`;
       const metaEl = document.createElement('div');
@@ -2997,7 +3469,9 @@ const Plan = (() => {
   }
 
   function addLinked(mode, id) {
-    const src = mode === 'chores' ? Chores.getItem(id) : Habits.getItem(id);
+    const src = mode === 'chores' ? Chores.getItem(id)
+              : mode === 'events' ? Events.getItem(id)
+              : Habits.getItem(id);
     if (!src) return;
     const { freq, basis } = suggestFreq(mode, id);
     items.push({
@@ -3048,6 +3522,20 @@ const Plan = (() => {
       hBox.appendChild(chip);
     });
     if (!hAny) hBox.innerHTML = '<div class="day-editor-empty-add">All personal habits are already planned.</div>';
+    // Occasional event chips
+    const eBox = document.getElementById('plan-eventChips');
+    eBox.innerHTML = '';
+    let eAny = false;
+    Events.list().forEach(ev => {
+      if (isPlanned('events', ev.id)) return;
+      eAny = true;
+      const chip = document.createElement('button');
+      chip.className = 'add-chip';
+      chip.innerHTML = `<span>${escapeHtml(ev.icon)}</span><span>${escapeHtml(ev.name)}</span><span style="margin-left:2px;">+</span>`;
+      chip.onclick = () => addLinked('events', ev.id);
+      eBox.appendChild(chip);
+    });
+    if (!eAny) eBox.innerHTML = '<div class="day-editor-empty-add">All occasional events are already planned.</div>';
     // Household chips
     const cBox = document.getElementById('plan-choreChips');
     cBox.innerHTML = '';
@@ -3101,7 +3589,7 @@ const Plan = (() => {
 // SYNC MODULE (Google Sheets via Apps Script)
 // ============================================================
 const Sync = (() => {
-  const KEYS = ['habits_items_v1','habits_data_v1','chores_items_v1','chores_data_v1','plan_items_v1'];
+  const KEYS = ['habits_items_v1','habits_data_v1','events_items_v1','events_data_v1','chores_items_v1','chores_data_v1','plan_items_v1'];
   const origSetItem = localStorage.setItem.bind(localStorage);
   let endpoint = localStorage.getItem('sync_endpoint_v1') || '';
   let pushTimer = null;
@@ -3250,6 +3738,7 @@ if ('serviceWorker' in navigator) {
 // Init
 renderHeader();
 Habits.init();
+Events.init();
 Chores.init();
 Plan.init();
 Sync.init();
